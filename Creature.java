@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.util.Random;
 import java.util.Scanner;
 
+
 public class Creature extends GameObject {
     
     private double rot;

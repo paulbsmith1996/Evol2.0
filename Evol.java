@@ -22,7 +22,7 @@ public class Evol extends Applet implements Runnable {
     private final int OFFSET = 50;
     private final int FPS = 30;
     
-    private final boolean GRAPHICS = true;
+    private final boolean GRAPHICS = false;
     
     /************************************/
     // VARIABLES USED TO MAINTAIN GAME OBJECTS
@@ -64,13 +64,10 @@ public class Evol extends Applet implements Runnable {
 	}
     }
     
-    // Initialize the applet and necessary constants
+    // Initialize Random object and Controller object
     public void init() {
-	
-	// Set size appropriately
 	resize(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-	// Initialize Random object and Controller object
+	
 	r = new Random();
 	
 	controller = new Controller();
@@ -207,6 +204,7 @@ public class Evol extends Applet implements Runnable {
 	}
     }
     
+
     /**
      * Draw all GameObjects that are currently alive and not consumed
      */
@@ -220,18 +218,21 @@ public class Evol extends Applet implements Runnable {
 	
 	
 	
+
 	/********** Draw GameObjects in front of background *********/
 	
 	
 	controller.draw(g);
 	
     }
+
     
     // App should stop running
     public void stop() {
 	running = false;
     }
     
+
     // Returns the controller object containing all of the GameObjects
     // currently alive and not consumed
     public Controller getController() {
