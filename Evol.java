@@ -11,22 +11,27 @@ import java.util.Random;
 
 public class Evol extends Applet implements Runnable {
 
+
     /************************************/
     // VARIABLES USED TO MAINTAIN APP CONSTANTS
     /************************************/
+
     
     private boolean running;
     private Thread ticker;
-    
+
+    // Width should be 1000 and height should be 700
     private final int WINDOW_WIDTH = 1000, WINDOW_HEIGHT = 700;
     private final int OFFSET = 50;
     private final int FPS = 30;
     
     private final boolean GRAPHICS = false;
+
     
     /************************************/
     // VARIABLES USED TO MAINTAIN GAME OBJECTS
     /************************************/
+
     
     // Holds all GameObjects currently being taken into account by game
     private Controller controller;
@@ -37,6 +42,7 @@ public class Evol extends Applet implements Runnable {
     // Objects used for testing
     private Creature test, test2, enemy, enemy2;
     private Food testFood, testFood2;
+
     
     /************************************/
     // STARTING CONDITIONS
@@ -52,6 +58,8 @@ public class Evol extends Applet implements Runnable {
     // Number of food sources generated per frame rendering * 1000
     // Default is 2000
     private final int FOOD_GEN_RATE = 1000;
+
+
     
     // Bookkeeping for starting main game thread
     public void start() {

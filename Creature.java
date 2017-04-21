@@ -63,7 +63,7 @@ public class Creature extends GameObject {
     private final int ON_FOOD = 8;
     
     // NUM_INSTRUCTIONS * INSTRUCTION_LENGTH <= 32
-    private final int NUM_INSTRUCTIONS = 4;
+    private final int NUM_INSTRUCTIONS = 15;
     private final int INSTRUCTION_LENGTH = 2;
     
     private int fleeing;
