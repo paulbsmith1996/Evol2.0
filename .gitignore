@@ -1,3 +1,11 @@
+# Netbeans stuff
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
 # Mac-generate stuff
 .DS_Store
 
