@@ -12,6 +12,7 @@ import java.util.Random;
 import java.awt.Rectangle;
 import java.awt.Font;
 import java.awt.event.KeyAdapter;
+import java.awt.FontMetrics;
 
 public class Evol extends JApplet implements Runnable {
 
@@ -28,11 +29,16 @@ public class Evol extends JApplet implements Runnable {
     private final int WINDOW_WIDTH = 1400, WINDOW_HEIGHT = 800;
     private final int MENU_WIDTH = 300, MENU_HEIGHT = WINDOW_HEIGHT;
     private final int CONSOLE_WIDTH = WINDOW_WIDTH - MENU_WIDTH, CONSOLE_HEIGHT = 150;
+    private final int SLIDER_X_OFFSET = 20, SLIDER_Y_OFFSET = 50;
+    private final int SLIDER_WIDTH = MENU_WIDTH - (2 * SLIDER_X_OFFSET);
+    private final int SLIDER_HEIGHT = 50;
 
     private final int OFFSET = 100;
 
     // Default FPS is 30
     private final int FPS = 30;
+    private int movesPerFrame = 10;
+    private int moveCount;
 
     private int enviWidth = WINDOW_WIDTH - MENU_WIDTH, 
 	enviHeight = WINDOW_HEIGHT - CONSOLE_HEIGHT;
@@ -43,6 +49,9 @@ public class Evol extends JApplet implements Runnable {
     
     private JTextPane txt = new JTextPane();
     private JScrollPane jsp;
+
+    // Used to select the number of moves per frame
+    private JSlider mpfSlider;
 
     private StringBuffer consoleSB = new StringBuffer();
 
@@ -123,14 +132,19 @@ public class Evol extends JApplet implements Runnable {
 	txt.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
 
 	jsp = new JScrollPane(txt);
-
-	//jsp.setLocation(0, enviHeight);
-	//jsp.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
 	this.add(jsp);
 	
+	mpfSlider = new JSlider(1, 100);
+	mpfSlider.setLocation(enviWidth + SLIDER_X_OFFSET, SLIDER_Y_OFFSET);
+	mpfSlider.setSize(SLIDER_WIDTH, SLIDER_HEIGHT);
+	mpfSlider.setValue(1);
+	this.add(mpfSlider);
+
 	r = new Random();
 	
 	controller = new Controller();
+
+	moveCount = 0;
 	
 	// Generate FOOD_START_COUNT random Food sources within reasonable bounds
 	for(int i = 0; i < FOOD_START_COUNT; i++) {
@@ -166,6 +180,8 @@ public class Evol extends JApplet implements Runnable {
     public void run() {
 	while(running) {
 
+	requestFocusInWindow();
+
 	    if(!keyHandler.getPaused()) {
 	    
 		// Keep track of number of GameObjects, predators, food sources, 
@@ -175,6 +191,8 @@ public class Evol extends JApplet implements Runnable {
 		int vegCount = 0;
 		int foodCount = 0;
 		
+		moveCount++;
+
 		// Get correct count for foods, herbivores, and preds
 		for(int i = 0; i < contSize; i++) {
 		    // Loop through all current GameObjects
@@ -260,7 +278,10 @@ public class Evol extends JApplet implements Runnable {
 
 	    }
 
-	    if(GRAPHICS) {
+	    if(GRAPHICS && moveCount >= movesPerFrame) {
+
+		moveCount %= movesPerFrame;
+
 		try {
 		    Thread.sleep(1000 / FPS);
 		} catch (InterruptedException e) {
@@ -268,6 +289,8 @@ public class Evol extends JApplet implements Runnable {
 		    e.printStackTrace();
 		}
 	    }	    
+
+	    movesPerFrame = mpfSlider.getValue();
 	    
 	}
     }
@@ -297,31 +320,35 @@ public class Evol extends JApplet implements Runnable {
 	/*********** Draw additional components *********************/
 
 
-
-	g.setColor(Color.WHITE);
-	g.fillRect(enviWidth, 0, MENU_WIDTH, MENU_HEIGHT);
-
 	g.setColor(Color.BLACK);     
 
-
 	jsp.getVerticalScrollBar().setEnabled(false);
-	//this.remove(jsp);
+
 	txt.setFont(new Font("Monospaced", 1, 12));
 	txt.setText(consoleSB.toString());
-	//txt.setLocation(0, enviHeight);
-	//txt.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
-	//txt.repaint();
 
-	//if(!consoleSB.toString().equals("")) {
-	//    System.out.println(consoleSB.toString());
-	//}
-
-	//jsp = new JScrollPane(txt);
 	jsp.setLocation(0, enviHeight);
 	jsp.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT - 1);
 	jsp.getVerticalScrollBar().setEnabled(true);
 
-	//this.add(jsp);
+	g.setFont(new Font("Times", 1, 12));
+	String mpf = "Moves per Frame";
+	FontMetrics fm = g.getFontMetrics();
+
+
+	mpfSlider.setLocation(enviWidth + SLIDER_X_OFFSET, SLIDER_Y_OFFSET);
+	mpfSlider.setSize(SLIDER_WIDTH, SLIDER_HEIGHT);
+	
+	mpfSlider.repaint();
+
+	g.setColor(Color.WHITE);
+	g.fillRect((int)mpfSlider.getX(), (int)mpfSlider.getY() - 5 - g.getFontMetrics().getHeight(), 
+	    mpfSlider.getWidth() / 2, g.getFontMetrics().getHeight());
+
+	g.setColor(Color.BLACK);
+	g.drawString(mpf + ": " + mpfSlider.getValue(), 
+		     (int)mpfSlider.getX(), 
+		     (int)mpfSlider.getY() - 5);
 
 	g.drawRect(enviWidth, 0, MENU_WIDTH, MENU_HEIGHT);
 	g.drawRect(0, enviHeight, CONSOLE_WIDTH, CONSOLE_HEIGHT);
