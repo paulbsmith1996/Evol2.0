@@ -44,8 +44,8 @@ public class Creature extends GameObject {
 
     private Evol game;
 
-    private int gameWidth, gameHeight;
-    private Rectangle gameBounds;
+    private int enviWidth, enviHeight;
+    private Rectangle enviBounds;
 
     // This will hold the x/y coordinates of two points:
     // the x/y coordinate of the creature and the edge of
@@ -87,10 +87,10 @@ public class Creature extends GameObject {
 
 	this.game = game;
 
-	this.gameWidth = game.getWidth();
-	this.gameHeight = game.getHeight();
+	this.enviWidth = game.getEnviWidth();
+	this.enviHeight = game.getEnviHeight();
 	
-	this.gameBounds = game.getBounds();
+	this.enviBounds = game.getEnviBounds();
 
 	this.enviObjects = game.getController();
 
@@ -228,10 +228,10 @@ public class Creature extends GameObject {
 	} else if (rot == Math.PI) {
 	    // Facing down
 	    vision[1][0] = vision[0][0];
-	    vision[1][1] = Math.min(gameHeight, vision[0][1] + VISION_DISTANCE);
+	    vision[1][1] = Math.min(enviHeight, vision[0][1] + VISION_DISTANCE);
 	} else {
 	    // Facing right
-	    vision[1][0] = Math.min(gameWidth, vision[0][0] + VISION_DISTANCE);
+	    vision[1][0] = Math.min(enviWidth, vision[0][0] + VISION_DISTANCE);
 	    vision[1][1] = vision[0][1];
 	}
     }
@@ -450,26 +450,12 @@ public class Creature extends GameObject {
 
     }
     
-    public void move() {
+    public String move() {
 	if (!dead) {
-	    
-	    
-	    
 	    
 	    if (species < 2) {
 		foodPoints -= starvingRate;
 		setSize(foodPoints);
-
-		/*
-		  if (!getStimFlee()) {
-		  checkStimulus();
-		  }
-		  
-
-		  if (instCount == 0) {
-		  stimuli &= (~STIM_FLEE);
-		  }
-		*/
 
 		// 32 bits in an int - 2 bits per instruction = 16 instructions max
 		if (getStimFlee()) {
@@ -503,11 +489,13 @@ public class Creature extends GameObject {
 		instCount %= NUM_INSTRUCTIONS;
 
 		if (checkDivide()) {
-		    divide();
+		    return divide();
 		}
 		
 	    }
 	}
+
+	return "";
 
     }
     
@@ -527,7 +515,7 @@ public class Creature extends GameObject {
 	} else if(move == 1) {
 	    checkStimulus();
 	} else {
-	    advance(gameBounds);
+	    advance(enviBounds);
 	}
     }
 
@@ -560,11 +548,15 @@ public class Creature extends GameObject {
 	return foodPoints > divisionThreshold;
     }
 
-    public void divide() {
+    public String divide() {
 	divideCount++;
 	
+	String genome = "";
+
 	if(divideCount % 10 == 0) {
-	    printGenome();
+	    //printGenome();
+	    genome = getGenome();
+
 	    // Indexing of genes starts at 1
 	    
 	    // Needs fixing!!!!!!!
@@ -607,6 +599,8 @@ public class Creature extends GameObject {
 	advance(bounds);
 
 	// enviObjects.printCreatureNum();
+
+	return genome;
     }
 
     // Mutate one instruction in one gene
@@ -629,6 +623,17 @@ public class Creature extends GameObject {
 			 + "Gene 4 (See Food)    : " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n" 
 			 + "Gene 5 (Unstimulated): " + toInst(genes[4], NUM_INSTRUCTIONS) + "\n\n" 
 			 + "----------------------------------------------\n\n");
+    }
+
+    public String getGenome() {
+	return "\n\n"    + divideCount + " divisions have occurred --- Species: " + species + "\n\n"
+			 + "Gene 1 (On Food)     : " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n" 
+			 + "Gene 2 (See Predator): " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n" 
+			 + "Gene 3 (See Prey)    : " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n" 
+			 + "Gene 4 (See Food)    : " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n" 
+			 + "Gene 5 (Unstimulated): " + toInst(genes[4], NUM_INSTRUCTIONS) + "\n\n" 
+			 + "----------------------------------------------";
+
     }
     
     public void printGene(int geneNum) {
