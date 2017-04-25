@@ -125,6 +125,7 @@ public class Evol extends JApplet implements Runnable {
 
 	setFocusable(true);
 
+	// Set title of applet
 	Frame title = (Frame)this.getParent().getParent();
 	title.setTitle("EVOL: A Simulator of Darwinian Evolution");
 
@@ -206,6 +207,7 @@ public class Evol extends JApplet implements Runnable {
 		
 		firstCheck = true;
 		moveCount++;
+		mostAncestors = 0;
 
 		// Get correct count for foods, herbivores, and preds
 		for(int i = 0; i < contSize; i++) {
@@ -222,6 +224,7 @@ public class Evol extends JApplet implements Runnable {
 			} else {
 			    // Creature is a herbivore
 			    vegCount++;
+			    ((Creature)obj).setColor(Color.BLUE);
 			}
 			
 			//consoleSB.append(((Creature) obj).move());
@@ -300,6 +303,10 @@ public class Evol extends JApplet implements Runnable {
 		// on.
 		// If only we could see more frames per second...
 
+	    }
+	    
+	    if(mostDeveloped != null) {
+		mostDeveloped.setColor(Color.GREEN);
 	    }
 
 	    if(keyHandler.getPaused() && firstCheck && Creature.divideCount > 0) {

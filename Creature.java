@@ -80,6 +80,8 @@ public class Creature extends GameObject {
     private int species;
     
     private int instCount;
+
+    private Color color;
     
     public Creature(int x, int y, double rot, int species, Evol game) {
 	super(x, y);
@@ -101,6 +103,12 @@ public class Creature extends GameObject {
 	this.genes = new int[5];
 
 	this.vision = new int[2][2];
+
+	if(species == 0) {
+	    this.color = Color.BLUE;
+	} else {
+	    this.color = Color.RED;
+	}
 
 	this.xPoints = new double[3];
 	this.yPoints = new double[3];
@@ -165,6 +173,8 @@ public class Creature extends GameObject {
     public int getNumAncestors() { return this.numAncestors; }
     public void setNumAncestors(int ancestors) { this.numAncestors = ancestors; }
     
+    public void setColor(Color c) { this.color = c; }
+    public Color getColor() { return this.color; }
 
     public int getStarvingRate() {
 	return starvingRate;
@@ -717,11 +727,7 @@ public class Creature extends GameObject {
 	g.setColor(Color.BLACK);
 	g.drawPolygon(approxX, approxY, 3);
 
-	if (species == 0) {
-	    g.setColor(Color.BLUE);
-	} else {
-	    g.setColor(Color.RED);
-	}
+	g.setColor(this.color);
 
 	g.fillPolygon(approxX, approxY, 3);
 
