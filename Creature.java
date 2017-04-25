@@ -23,6 +23,7 @@ public class Creature extends GameObject {
     protected static int divideCount = 0;
     protected static int herbDivCount = 0;
     protected static double instCountinGene = 0;
+    private int numAncestors;
 
     private final int ROTATE_SPEED = 10;
     private final int DEFAULT_DIVISION_THRESHOLD = 30000;
@@ -44,8 +45,8 @@ public class Creature extends GameObject {
 
     private Evol game;
 
-    private int gameWidth, gameHeight;
-    private Rectangle gameBounds;
+    private int enviWidth, enviHeight;
+    private Rectangle enviBounds;
 
     // This will hold the x/y coordinates of two points:
     // the x/y coordinate of the creature and the edge of
@@ -79,6 +80,8 @@ public class Creature extends GameObject {
     private int species;
     
     private int instCount;
+
+    private Color color;
     
     public Creature(int x, int y, double rot, int species, Evol game) {
 	super(x, y);
@@ -87,17 +90,25 @@ public class Creature extends GameObject {
 
 	this.game = game;
 
-	this.gameWidth = game.getWidth();
-	this.gameHeight = game.getHeight();
+	this.enviWidth = game.getEnviWidth();
+	this.enviHeight = game.getEnviHeight();
 	
-	this.gameBounds = game.getBounds();
+	this.enviBounds = game.getEnviBounds();
 
 	this.enviObjects = game.getController();
+
+	this.numAncestors = 0;
 
 	this.species = species;
 	this.genes = new int[5];
 
 	this.vision = new int[2][2];
+
+	if(species == 0) {
+	    this.color = Color.BLUE;
+	} else {
+	    this.color = Color.RED;
+	}
 
 	this.xPoints = new double[3];
 	this.yPoints = new double[3];
@@ -105,16 +116,6 @@ public class Creature extends GameObject {
 	this.rot = 0;
 
 	this.stimulated = false;
-	
-	//this.stimFood = false;
-	//this.stimFlee = false;
-	//this.stimFight = false;
-	//this.eating = false;
-	
-	// Pick a random sequence of 0's and 1's so long as the first 12 digits are 1
-	//this.gene = rand.nextLong() | 4095;
-	
-	
 	
 	// Set random behavior for genes
 	for(int i = 0; i < genes.length; i++) {
@@ -131,7 +132,7 @@ public class Creature extends GameObject {
 	this.fleeing = 0;
 	this.dead = false;
 
-	this.foodPoints = DEFAULT_FP * (species + 1);
+	this.foodPoints = DEFAULT_FP * (species + 1) + (2 * species * DEFAULT_FP);
 	this.movementSpeed = START_MOVE_SPEED;
 	this.eatSpeed = START_EAT_SPEED;
 	
@@ -169,6 +170,11 @@ public class Creature extends GameObject {
     public void setOnFood() { this.stimuli |= ON_FOOD; }
     public boolean getOnFood() { return (this.stimuli & ON_FOOD) != 0; }
     
+    public int getNumAncestors() { return this.numAncestors; }
+    public void setNumAncestors(int ancestors) { this.numAncestors = ancestors; }
+    
+    public void setColor(Color c) { this.color = c; }
+    public Color getColor() { return this.color; }
 
     public int getStarvingRate() {
 	return starvingRate;
@@ -228,10 +234,10 @@ public class Creature extends GameObject {
 	} else if (rot == Math.PI) {
 	    // Facing down
 	    vision[1][0] = vision[0][0];
-	    vision[1][1] = Math.min(gameHeight, vision[0][1] + VISION_DISTANCE);
+	    vision[1][1] = Math.min(enviHeight, vision[0][1] + VISION_DISTANCE);
 	} else {
 	    // Facing right
-	    vision[1][0] = Math.min(gameWidth, vision[0][0] + VISION_DISTANCE);
+	    vision[1][0] = Math.min(enviWidth, vision[0][0] + VISION_DISTANCE);
 	    vision[1][1] = vision[0][1];
 	}
     }
@@ -450,26 +456,12 @@ public class Creature extends GameObject {
 
     }
     
-    public void move() {
+    public String move() {
 	if (!dead) {
-	    
-	    
-	    
 	    
 	    if (species < 2) {
 		foodPoints -= starvingRate;
 		setSize(foodPoints);
-
-		/*
-		  if (!getStimFlee()) {
-		  checkStimulus();
-		  }
-		  
-
-		  if (instCount == 0) {
-		  stimuli &= (~STIM_FLEE);
-		  }
-		*/
 
 		// 32 bits in an int - 2 bits per instruction = 16 instructions max
 		if (getStimFlee()) {
@@ -503,11 +495,13 @@ public class Creature extends GameObject {
 		instCount %= NUM_INSTRUCTIONS;
 
 		if (checkDivide()) {
-		    divide();
+		    return divide();
 		}
 		
 	    }
 	}
+
+	return "";
 
     }
     
@@ -527,7 +521,7 @@ public class Creature extends GameObject {
 	} else if(move == 1) {
 	    checkStimulus();
 	} else {
-	    advance(gameBounds);
+	    advance(enviBounds);
 	}
     }
 
@@ -560,11 +554,15 @@ public class Creature extends GameObject {
 	return foodPoints > divisionThreshold;
     }
 
-    public void divide() {
+    public String divide() {
 	divideCount++;
 	
+	String genome = "";
+
 	if(divideCount % 10 == 0) {
-	    printGenome();
+	    //printGenome();
+	    genome = getGenome();
+
 	    // Indexing of genes starts at 1
 	    
 	    // Needs fixing!!!!!!!
@@ -586,6 +584,7 @@ public class Creature extends GameObject {
 	for(int i = 0; i < 3 - (2 * species); i++) {
 	    Creature child = new Creature(getX(), getY(), (Math.PI / 2) * (i + 1), species, game);
 	    
+	    child.setNumAncestors(getNumAncestors() + 1);
 	    
 	    for(int geneNum = 0; geneNum < genes.length; geneNum++) {
 		
@@ -607,6 +606,8 @@ public class Creature extends GameObject {
 	advance(bounds);
 
 	// enviObjects.printCreatureNum();
+
+	return genome;
     }
 
     // Mutate one instruction in one gene
@@ -629,6 +630,17 @@ public class Creature extends GameObject {
 			 + "Gene 4 (See Food)    : " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n" 
 			 + "Gene 5 (Unstimulated): " + toInst(genes[4], NUM_INSTRUCTIONS) + "\n\n" 
 			 + "----------------------------------------------\n\n");
+    }
+
+    public String getGenome() {
+	return "\n\n"    + divideCount + " divisions have occurred --- Species: " + species + "\n\n"
+			 + "Gene 1 (On Food)     : " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n" 
+			 + "Gene 2 (See Predator): " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n" 
+			 + "Gene 3 (See Prey)    : " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n" 
+			 + "Gene 4 (See Food)    : " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n" 
+			 + "Gene 5 (Unstimulated): " + toInst(genes[4], NUM_INSTRUCTIONS) + "\n\n" 
+			 + "----------------------------------------------";
+
     }
     
     public void printGene(int geneNum) {
@@ -715,11 +727,7 @@ public class Creature extends GameObject {
 	g.setColor(Color.BLACK);
 	g.drawPolygon(approxX, approxY, 3);
 
-	if (species == 0) {
-	    g.setColor(Color.BLUE);
-	} else {
-	    g.setColor(Color.RED);
-	}
+	g.setColor(this.color);
 
 	g.fillPolygon(approxX, approxY, 3);
 
