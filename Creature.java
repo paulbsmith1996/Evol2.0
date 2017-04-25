@@ -23,6 +23,7 @@ public class Creature extends GameObject {
     protected static int divideCount = 0;
     protected static int herbDivCount = 0;
     protected static double instCountinGene = 0;
+    private int numAncestors;
 
     private final int ROTATE_SPEED = 10;
     private final int DEFAULT_DIVISION_THRESHOLD = 30000;
@@ -94,6 +95,8 @@ public class Creature extends GameObject {
 
 	this.enviObjects = game.getController();
 
+	this.numAncestors = 0;
+
 	this.species = species;
 	this.genes = new int[5];
 
@@ -105,16 +108,6 @@ public class Creature extends GameObject {
 	this.rot = 0;
 
 	this.stimulated = false;
-	
-	//this.stimFood = false;
-	//this.stimFlee = false;
-	//this.stimFight = false;
-	//this.eating = false;
-	
-	// Pick a random sequence of 0's and 1's so long as the first 12 digits are 1
-	//this.gene = rand.nextLong() | 4095;
-	
-	
 	
 	// Set random behavior for genes
 	for(int i = 0; i < genes.length; i++) {
@@ -131,7 +124,7 @@ public class Creature extends GameObject {
 	this.fleeing = 0;
 	this.dead = false;
 
-	this.foodPoints = DEFAULT_FP * (species + 1);
+	this.foodPoints = DEFAULT_FP * (species + 1) + (2 * species * DEFAULT_FP);
 	this.movementSpeed = START_MOVE_SPEED;
 	this.eatSpeed = START_EAT_SPEED;
 	
@@ -168,6 +161,9 @@ public class Creature extends GameObject {
     
     public void setOnFood() { this.stimuli |= ON_FOOD; }
     public boolean getOnFood() { return (this.stimuli & ON_FOOD) != 0; }
+    
+    public int getNumAncestors() { return this.numAncestors; }
+    public void setNumAncestors(int ancestors) { this.numAncestors = ancestors; }
     
 
     public int getStarvingRate() {
@@ -578,6 +574,7 @@ public class Creature extends GameObject {
 	for(int i = 0; i < 3 - (2 * species); i++) {
 	    Creature child = new Creature(getX(), getY(), (Math.PI / 2) * (i + 1), species, game);
 	    
+	    child.setNumAncestors(getNumAncestors() + 1);
 	    
 	    for(int geneNum = 0; geneNum < genes.length; geneNum++) {
 		

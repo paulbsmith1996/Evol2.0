@@ -4,15 +4,11 @@
 </html>
 */
 
-//import java.applet.Applet;
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.Random;
-import java.awt.Rectangle;
-import java.awt.Font;
-import java.awt.event.KeyAdapter;
-import java.awt.FontMetrics;
+import java.awt.*;
 
 public class Evol extends JApplet implements Runnable {
 
@@ -39,6 +35,11 @@ public class Evol extends JApplet implements Runnable {
     private final int FPS = 30;
     private int movesPerFrame = 10;
     private int moveCount;
+    private boolean firstCheck;
+
+    private Creature mostDeveloped;
+
+    private int mostAncestors;
 
     private int enviWidth = WINDOW_WIDTH - MENU_WIDTH, 
 	enviHeight = WINDOW_HEIGHT - CONSOLE_HEIGHT;
@@ -70,6 +71,8 @@ public class Evol extends JApplet implements Runnable {
     // Objects used for testing
     private Creature test, test2, enemy, enemy2;
     private Food testFood, testFood2;
+
+    private int herbCount;
 
     
     /************************************/
@@ -122,6 +125,9 @@ public class Evol extends JApplet implements Runnable {
 
 	setFocusable(true);
 
+	Frame title = (Frame)this.getParent().getParent();
+	title.setTitle("EVOL: A Simulator of Darwinian Evolution");
+
 	keyHandler = new KeyHandler();
 	this.addKeyListener(keyHandler);
 
@@ -145,6 +151,8 @@ public class Evol extends JApplet implements Runnable {
 	controller = new Controller();
 
 	moveCount = 0;
+	mostAncestors = 0;
+	firstCheck = true;
 	
 	// Generate FOOD_START_COUNT random Food sources within reasonable bounds
 	for(int i = 0; i < FOOD_START_COUNT; i++) {
@@ -156,9 +164,13 @@ public class Evol extends JApplet implements Runnable {
 	// Generate HERB_START_COUNT random Creatures within reasonable bounds
 	for(int i = 0; i < HERB_START_COUNT; i++) {
 	    controller.add(new Creature(r.nextInt(enviWidth - OFFSET), // x coordinate
-					r.nextInt(enviHeight - OFFSET), // y coordinate
-					0, 0, this));
+					    r.nextInt(enviHeight - OFFSET), // y coordinate
+					    0, 0, this));
+
+
 	}
+
+	herbCount = HERB_START_COUNT;
 	
 	// Generate PRED_START_COUNT random predator creatures within reasonable bounds
 	if(PREDS_ON) {
@@ -169,6 +181,7 @@ public class Evol extends JApplet implements Runnable {
 		controller.add(enemy);
 	    }
 	}
+
 	
 	
     }
@@ -191,6 +204,7 @@ public class Evol extends JApplet implements Runnable {
 		int vegCount = 0;
 		int foodCount = 0;
 		
+		firstCheck = true;
 		moveCount++;
 
 		// Get correct count for foods, herbivores, and preds
@@ -210,14 +224,23 @@ public class Evol extends JApplet implements Runnable {
 			    vegCount++;
 			}
 			
-			consoleSB.append(((Creature) obj).move());
+			//consoleSB.append(((Creature) obj).move());
+			((Creature)obj).move();
+
+			if(((Creature) obj).getNumAncestors() > mostAncestors) {
+			    mostAncestors = ((Creature)obj).getNumAncestors();
+			    mostDeveloped = (Creature)obj;
+			}
+
 		    } else if(obj instanceof Food) {
 			
 			// GameObject is Food
 			foodCount++;
 		    }
 		}
-		
+
+		herbCount = vegCount;
+
 		// Controller removes all dead creatures and consumed food sources
 		controller.testObjects();
 		
@@ -262,13 +285,14 @@ public class Evol extends JApplet implements Runnable {
 		  controller.add(newVeg);
 		  }
 		*/
-		
+
 		if(vegCount == 0) {
 		    System.out.println("----------ALL HERBIVORES DIED--------------");
 		    stop();
 		}
 		
 		
+
 		// Call draw for all GameObjects in our controller
 		repaint();
 		
@@ -276,6 +300,12 @@ public class Evol extends JApplet implements Runnable {
 		// on.
 		// If only we could see more frames per second...
 
+	    }
+
+	    if(keyHandler.getPaused() && firstCheck && Creature.divideCount > 0) {
+		consoleSB.append("\n\nMost developed creature's genome: \n");
+		consoleSB.append(mostDeveloped.getGenome());
+		firstCheck = false;
 	    }
 
 	    if(GRAPHICS && moveCount >= movesPerFrame) {
@@ -334,6 +364,7 @@ public class Evol extends JApplet implements Runnable {
 	g.setFont(new Font("Times", 1, 12));
 	String mpf = "Moves per Frame";
 	FontMetrics fm = g.getFontMetrics();
+	int fontHeight = fm.getHeight();
 
 
 	mpfSlider.setLocation(enviWidth + SLIDER_X_OFFSET, SLIDER_Y_OFFSET);
@@ -342,17 +373,49 @@ public class Evol extends JApplet implements Runnable {
 	mpfSlider.repaint();
 
 	g.setColor(Color.WHITE);
-	g.fillRect((int)mpfSlider.getX(), (int)mpfSlider.getY() - 5 - g.getFontMetrics().getHeight(), 
-	    mpfSlider.getWidth() / 2, g.getFontMetrics().getHeight());
+	g.fillRect((int)mpfSlider.getX(), (int)mpfSlider.getY() - 5 - fontHeight, 
+	    mpfSlider.getWidth() / 2, fontHeight);
 
 	g.setColor(Color.BLACK);
 	g.drawString(mpf + ": " + mpfSlider.getValue(), 
 		     (int)mpfSlider.getX(), 
 		     (int)mpfSlider.getY() - 5);
 
+
+	g.setColor(Color.WHITE);
+	g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 20 - fontHeight, 
+		   SLIDER_WIDTH, fontHeight);
+
+	g.setColor(Color.BLACK);
+	g.drawString("Number of divisions: " + Creature.divideCount, 
+		     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 20);
+
+
+	g.setColor(Color.WHITE);
+	g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40 - fontHeight, 
+		   SLIDER_WIDTH, fontHeight);
+
+	g.setColor(Color.BLACK);
+	g.drawString("Most ancestors: " + mostAncestors, 
+		     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40);
+
+	g.setColor(Color.WHITE);
+	g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60 - fontHeight, 
+		   SLIDER_WIDTH, fontHeight);
+
+	g.setColor(Color.BLACK);
+	g.drawString("Number of Prey: " + herbCount, 
+		     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60);
+
+
+	/****************** Draw Borders ***************************/
+
+
 	g.drawRect(enviWidth, 0, MENU_WIDTH, MENU_HEIGHT);
 	g.drawRect(0, enviHeight, CONSOLE_WIDTH, CONSOLE_HEIGHT);
-	
+
+
+		
     }
 
     
