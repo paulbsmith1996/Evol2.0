@@ -27,7 +27,7 @@ all: evol
 run: $(OBJ)
 	appletviewer Evol.java
 
-# Compile Evol code (e.g., `make evol`). 
+# Compile Evol code (e.g., `make evol`).
 evol: $(OBJ)
 
 # Compile project source.

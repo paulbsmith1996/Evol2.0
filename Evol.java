@@ -7,7 +7,6 @@
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.util.Random;
 import java.awt.*;
 
 public class Evol extends JApplet implements Runnable {
@@ -65,9 +64,8 @@ public class Evol extends JApplet implements Runnable {
     // Holds all GameObjects currently being taken into account by game
     private Controller controller;
 
-
     // Used to generate random values
-    private Random r;
+    private MersenneTwister r;
 
     // Objects used for testing
     private Creature test, test2, enemy, enemy2;
@@ -142,7 +140,7 @@ public class Evol extends JApplet implements Runnable {
         mpfSlider.setValue(1);
         this.add(mpfSlider);
 
-        r = new Random();
+        r = new MersenneTwister();
 
         controller = new Controller();
 
