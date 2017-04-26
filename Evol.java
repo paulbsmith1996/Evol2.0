@@ -22,23 +22,23 @@ public class Evol extends JApplet implements Runnable {
     private Thread ticker;
 
     // Width should be 1000 and height should be 700
-    private final int WINDOW_WIDTH = 1400, WINDOW_HEIGHT = 800;
-    private final int MENU_WIDTH = 300, MENU_HEIGHT = WINDOW_HEIGHT;
-    private final int CONSOLE_WIDTH = WINDOW_WIDTH - MENU_WIDTH, CONSOLE_HEIGHT = 150;
+    private final int WINDOW_WIDTH    = 1400, WINDOW_HEIGHT = 800;
+    private final int MENU_WIDTH      = 300, MENU_HEIGHT    = WINDOW_HEIGHT;
+    private final int CONSOLE_WIDTH   = WINDOW_WIDTH - MENU_WIDTH, CONSOLE_HEIGHT = 150;
     private final int SLIDER_X_OFFSET = 20, SLIDER_Y_OFFSET = 50;
-    private final int SLIDER_WIDTH = MENU_WIDTH - (2 * SLIDER_X_OFFSET);
-    private final int SLIDER_HEIGHT = 50;
+    private final int SLIDER_WIDTH    = MENU_WIDTH - (2 * SLIDER_X_OFFSET);
+    private final int SLIDER_HEIGHT   = 50;
 
+    // Food offset
     private final int OFFSET = 100;
 
     // Default FPS is 30
-    private final int FPS = 30;
+    private final int FPS     = 30;
     private int movesPerFrame = 10;
     private int moveCount;
     private boolean firstCheck;
 
     private Creature mostDeveloped;
-
     private int mostAncestors;
 
     private int enviWidth = WINDOW_WIDTH - MENU_WIDTH, 
@@ -81,30 +81,23 @@ public class Evol extends JApplet implements Runnable {
         
     private final int HERB_START_COUNT = 300;
     private final int PRED_START_COUNT = 10;
-    private final int MAX_FOOD = 700;
-    private final int MAX_FOOD_AMOUNT = 10000;
+    private final int MAX_FOOD         = 700;
+    private final int MAX_FOOD_AMOUNT  = 10000;
     private final int FOOD_START_COUNT = MAX_FOOD; 
-    private final boolean PREDS_ON= true;
+    private final boolean PREDS_ON     = true;
     
     // Number of food sources generated per frame rendering * 1000
     // Default is 2000
     private final int FOOD_GEN_RATE = 1000;
 
-    public void setEnviWidth(int width) {
-	this.enviWidth = width;
-    }
-
-    public int getEnviWidth() {
-	return this.enviWidth;
-    }
+    public void setEnviWidth(int width) { this.enviWidth = width; }
+    public int getEnviWidth() { return this.enviWidth; }
 
     public void setEnviHeight(int height) { this.enviHeight = height; }
     public int getEnviHeight() { return this.enviHeight; }
 
 
-    public Rectangle getEnviBounds() {
-	return new Rectangle(0, 0, enviWidth, enviHeight);
-    }
+    public Rectangle getEnviBounds() { return new Rectangle(0, 0, enviWidth, enviHeight); }
     
     // Bookkeeping for starting main game thread
     public void start() {
@@ -296,8 +289,7 @@ public class Evol extends JApplet implements Runnable {
 		
 		
 
-		// Call draw for all GameObjects in our controller
-		repaint();
+
 		
 		// Sleep to allow user's eyes to actually process what is going
 		// on.
@@ -318,6 +310,9 @@ public class Evol extends JApplet implements Runnable {
 	    if(GRAPHICS && moveCount >= movesPerFrame) {
 
 		moveCount %= movesPerFrame;
+
+		// Call draw for all GameObjects in our controller
+		repaint();
 
 		try {
 		    Thread.sleep(1000 / FPS);
