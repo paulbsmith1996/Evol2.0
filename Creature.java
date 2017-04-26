@@ -1,7 +1,6 @@
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
-import java.util.Random;
 import java.util.Scanner;
 
 
@@ -15,7 +14,7 @@ public class Creature extends GameObject {
     private int width = 10;
     private int height = 20;
 
-    private Random rand;
+    private MersenneTwister rand;
 
     private final String[] INSTRUCTIONS = {"A ", "C ", "R1", "R2"};
 
@@ -86,7 +85,7 @@ public class Creature extends GameObject {
     public Creature(int x, int y, double rot, int species, Evol game) {
         super(x, y);
 
-        rand = new Random();
+        rand = new MersenneTwister();
 
         this.game = game;
 
