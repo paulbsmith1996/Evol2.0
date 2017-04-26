@@ -7,11 +7,11 @@ public class KeyHandler extends KeyAdapter implements KeyListener{
     public boolean getPaused() { return this.paused; }
 
     public void keyPressed(KeyEvent e) {
-	
-	int key = e.getKeyCode();
-	if(key == KeyEvent.VK_SPACE) {
-	    paused = !paused;
-	}
+
+        int key = e.getKeyCode();
+        if(key == KeyEvent.VK_SPACE) {
+            paused = !paused;
+        }
     }
 
     public void keyReleased(KeyEvent e) {
