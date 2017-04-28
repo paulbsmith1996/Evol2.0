@@ -5,9 +5,11 @@
 */
 
 import javax.swing.*;
+import java.awt.*;
+import java.io.*;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.*;
+import java.util.Vector;
 
 public class Evol extends JApplet implements Runnable {
 
@@ -64,6 +66,13 @@ public class Evol extends JApplet implements Runnable {
     // Holds all GameObjects currently being taken into account by game
     private Controller controller;
 
+    // This is a Vector such that every Vector of longs within it contains
+    // the times of all creatures that have divided from that generation.
+    // For example generationDivisionTimes[0] is a Vector that holds all
+    // the division times for the first generation of creatures, initially
+    // spawned when the applet initializes
+    public static Vector<Vector<Long>> generationDivisionTimes;
+
     // Used to generate random values
     private MersenneTwister r;
 
@@ -79,7 +88,7 @@ public class Evol extends JApplet implements Runnable {
     /************************************/
 
     private final int HERB_START_COUNT = 300;
-    private final int PRED_START_COUNT = 10;
+    private final int PRED_START_COUNT = 3;
     private final int MAX_FOOD         = 700;
     private final int MAX_FOOD_AMOUNT  = 10000;
     private final int FOOD_START_COUNT = MAX_FOOD;
@@ -108,13 +117,15 @@ public class Evol extends JApplet implements Runnable {
             ticker.start();
         }
 
+        resize(WINDOW_WIDTH, WINDOW_HEIGHT);
+
         requestFocusInWindow();
     }
 
 
     // Initialize Random object and Controller object
     public void init() {
-        resize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        //resize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         setFocusable(true);
 
@@ -125,8 +136,9 @@ public class Evol extends JApplet implements Runnable {
         keyHandler = new KeyHandler();
         this.addKeyListener(keyHandler);
 
-        txt.setText("This is the JSP");
-        txt.setEditable(false);
+        //txt.setText("This is the JSP");
+        //txt.setEditable(false);
+        txt.setEditable(true);
 
         txt.setLocation(0, enviHeight);
         txt.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
@@ -143,6 +155,7 @@ public class Evol extends JApplet implements Runnable {
         r = new MersenneTwister();
 
         controller = new Controller();
+	generationDivisionTimes = new Vector<Vector<Long>>();
 
         moveCount = 0;
         mostAncestors = 0;
@@ -207,23 +220,43 @@ public class Evol extends JApplet implements Runnable {
 
 
                     if(obj instanceof Creature) {
-
                         // GameObject is a Creature
-                        if(((Creature) obj).getSpecies() == 1) {
+
+			Creature creat = (Creature)obj;			
+
+                        if(creat.getSpecies() == 1) {
                             // Creature is a predator
                             predCount++;
                         } else {
                             // Creature is a herbivore
                             vegCount++;
-                            ((Creature)obj).setColor(Color.BLUE);
+                            creat.setColor(Color.BLUE);
                         }
 
-                        //consoleSB.append(((Creature) obj).move());
-                        ((Creature)obj).move();
 
-                        if(((Creature) obj).getNumAncestors() > mostAncestors) {
-                            mostAncestors = ((Creature)obj).getNumAncestors();
-                            mostDeveloped = (Creature)obj;
+			// Move the creature. If the return value is greater than 0,
+			// this means the creature has divided
+			long divideTime = creat.move();
+
+                        if(divideTime > 0) {
+
+			    int creatNumAncestors = creat.getNumAncestors();
+
+			    if(creatNumAncestors >= generationDivisionTimes.size()) {
+				generationDivisionTimes.add(new Vector<Long>());
+			    }
+
+			    generationDivisionTimes.elementAt(creatNumAncestors).add(divideTime);
+			
+			}
+
+			if(creat.getTimeToDivide() < Creature.EATEN) {
+			    creat.setTimeToDivide( creat.getTimeToDivide() + 1 );
+			}
+
+                        if(creat.getNumAncestors() > mostAncestors) {
+                            mostAncestors = creat.getNumAncestors();
+                            mostDeveloped = creat;
                         }
 
                     } else if(obj instanceof Food) {
@@ -262,7 +295,7 @@ public class Evol extends JApplet implements Runnable {
                     if(Creature.divideCount < 2000) {
                         controller.add(newPred);
                     } else {
-                        for(int i = 0; i < 10; i++) {
+                        for(int i = 0; i < 3; i++) {
                             newPred = new Creature(r.nextInt(enviWidth - OFFSET),
                             r.nextInt(enviHeight - OFFSET),
                             0, 1, this);
@@ -281,7 +314,8 @@ public class Evol extends JApplet implements Runnable {
             */
 
             if(vegCount == 0) {
-                System.out.println("----------ALL HERBIVORES DIED--------------");
+                consoleSB.append("\n\n----------ALL HERBIVORES DIED--------------\n\n");
+		repaint();
                 stop();
             }
 
@@ -299,11 +333,71 @@ public class Evol extends JApplet implements Runnable {
             mostDeveloped.setColor(Color.GREEN);
         }
 
-        if(keyHandler.getPaused() && firstCheck && Creature.divideCount > 0) {
+        /*
+	  if(keyHandler.getPaused() && firstCheck && Creature.divideCount > 0) {
             consoleSB.append("\n\nMost developed creature's genome: \n");
             consoleSB.append(mostDeveloped.getGenome());
             firstCheck = false;
         }
+	*/
+
+	// We either want to print something to the console or write it to a file
+	if(keyHandler.getPrintTimes() || keyHandler.getWriteToFile()) {
+	    keyHandler.setPrintTimes(false);
+	    
+	    consoleSB.append(Creature.divideCount + " divisions have occured\n");
+	    consoleSB.append("Division times for each generation:\n\n");
+	    
+	    int gdtSize = generationDivisionTimes.size();
+
+	    for(int i = 0; i < gdtSize; i++) {
+
+		Vector<Long> genTimes = generationDivisionTimes.elementAt(i);
+
+		//consoleSB.append(i + ": ");
+
+		for(long l: genTimes) {
+		    consoleSB.append(l + ", ");
+		}
+
+		consoleSB.append("\n");
+	    }
+
+	    consoleSB.append("\n\n\n");
+
+	    System.out.print(consoleSB.toString());
+
+	}
+
+	if(keyHandler.getWriteToFile()) {
+
+	    keyHandler.setWriteToFile(false);
+
+	    try{
+		
+		File f = new File("test.txt");
+
+		if(f.createNewFile()) {
+		    System.out.println("file created");
+		}
+
+		f.setWritable(true);
+		BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
+		out.write(consoleSB.toString());
+		out.close();
+		
+
+		/*
+		PrintWriter pw = new PrintWriter("text.txt", "UTF-8");
+		pw.print(consoleSB.toString());
+		pw.close();
+		*/
+
+	    } catch(Exception e) { 
+		System.out.println("ERROR: Could not write to file."); 
+		e.printStackTrace();
+	    }
+	}
 
         if(GRAPHICS && moveCount >= movesPerFrame) {
 
@@ -356,6 +450,7 @@ public void paint(Graphics g) {
 
     txt.setFont(new Font("Monospaced", 1, 12));
     txt.setText(consoleSB.toString());
+    txt.setEditable(true);
 
     jsp.setLocation(0, enviHeight);
     jsp.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT - 1);
@@ -383,29 +478,29 @@ public void paint(Graphics g) {
 
 
     g.setColor(Color.WHITE);
-    g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 20 - fontHeight,
-    SLIDER_WIDTH, fontHeight);
-
-    g.setColor(Color.BLACK);
-    g.drawString("Number of divisions: " + Creature.divideCount,
-    enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 20);
-
-
-    g.setColor(Color.WHITE);
     g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40 - fontHeight,
     SLIDER_WIDTH, fontHeight);
 
     g.setColor(Color.BLACK);
-    g.drawString("Most ancestors: " + mostAncestors,
+    g.drawString("Number of divisions: " + Creature.divideCount,
     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40);
+
 
     g.setColor(Color.WHITE);
     g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60 - fontHeight,
     SLIDER_WIDTH, fontHeight);
 
     g.setColor(Color.BLACK);
-    g.drawString("Number of Prey: " + herbCount,
+    g.drawString("Most ancestors: " + mostAncestors,
     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60);
+
+    g.setColor(Color.WHITE);
+    g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 80 - fontHeight,
+    SLIDER_WIDTH, fontHeight);
+
+    g.setColor(Color.BLACK);
+    g.drawString("Number of Prey: " + herbCount,
+    enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 80);
 
 
     /****************** Draw Borders ***************************/

@@ -82,6 +82,10 @@ public class Creature extends GameObject {
 
     private Color color;
 
+    // This will get updated every move, so that it increases as time goes on
+    private long timeToDivide;
+    protected static final long EATEN = 50000;
+
     public Creature(int x, int y, double rot, int species, Evol game) {
         super(x, y);
 
@@ -152,6 +156,7 @@ public class Creature extends GameObject {
 
         count = 0;
         instCount = 0;
+	this.timeToDivide = 0;
     }
 
     public void setGene(int geneNum, int gene) { genes[geneNum] = gene; }
@@ -175,6 +180,12 @@ public class Creature extends GameObject {
     public void setColor(Color c) { this.color = c; }
     public Color getColor() { return this.color; }
 
+    public long getTimeToDivide() { return this.timeToDivide; }
+    public void setTimeToDivide(long ttd) { this.timeToDivide = ttd; }
+
+    public boolean isDead() { return this.dead; }
+    public void setDead(boolean d) { this.dead = d; }
+    
     public int getStarvingRate() {
         return starvingRate;
     }
@@ -380,6 +391,7 @@ public class Creature extends GameObject {
 
     public void die() {
         this.foodPoints = 0;
+	this.timeToDivide = EATEN;
         dead = true;
     }
 
@@ -455,7 +467,7 @@ public class Creature extends GameObject {
 
     }
 
-    public String move() {
+    public long move() {
         if (!dead) {
 
             if (species < 2) {
@@ -496,14 +508,14 @@ public class Creature extends GameObject {
                 if (checkDivide()) {
                     return divide();
                 }
-
+		
             }
         }
 
-        return "";
-
+        return -1;
+	
     }
-
+    
     // Will execute the moves corresponding to the sequence of moves
     // starting at the indicated start bit in the gene
     public void execute(int gene, int inst) {
@@ -553,7 +565,7 @@ public class Creature extends GameObject {
         return foodPoints > divisionThreshold;
     }
 
-    public String divide() {
+    public long divide() {
         divideCount++;
 
         String genome = "";
@@ -606,7 +618,7 @@ public class Creature extends GameObject {
 
         // enviObjects.printCreatureNum();
 
-        return genome;
+        return timeToDivide;
     }
 
     // Mutate one instruction in one gene
@@ -689,60 +701,44 @@ public class Creature extends GameObject {
 
             String inst = INSTRUCTIONS[toConvert];
 
+	    result += inst + " ";
 
+	}
 
-            /*
-            if(toConvert == 0) {
-            inst = "A ";
-        } else if(toConvert == 1) {
-        inst = "C ";
-    } else if(toConvert == 2) {
-    inst = "R1";
-} else if(toConvert == 3) {
-inst = "R2";
-}
-*/
-
-
-
-result += inst + " ";
-
-}
-
-return result;
-}
-
-@Override
-public void draw(Graphics g) {
-
-    int[] approxX = new int[3];
-    int[] approxY = new int[3];
-
-    for (int i = 0; i < 3; i++) {
-        approxX[i] = (int) xPoints[i];
-        approxY[i] = (int) yPoints[i];
+	return result;
     }
 
-    g.setColor(Color.BLACK);
-    g.drawPolygon(approxX, approxY, 3);
-
-    g.setColor(this.color);
-
-    g.fillPolygon(approxX, approxY, 3);
-
-    if (stimulated) {
-        if (getStimFlee()) {
-            // Sees another Creature
-            g.setColor(Color.RED);
-        } else if (getStimFood() || getStimFight()) {
-            g.setColor(Color.GREEN);
-        } else {
-            g.setColor(Color.ORANGE);
-        }
-    } else {
-        g.setColor(Color.ORANGE);
+    @Override
+	public void draw(Graphics g) {
+	
+	int[] approxX = new int[3];
+	int[] approxY = new int[3];
+	
+	for (int i = 0; i < 3; i++) {
+	    approxX[i] = (int) xPoints[i];
+	    approxY[i] = (int) yPoints[i];
+	}
+	
+	g.setColor(Color.BLACK);
+	g.drawPolygon(approxX, approxY, 3);
+	
+	g.setColor(this.color);
+	
+	g.fillPolygon(approxX, approxY, 3);
+	
+	if (stimulated) {
+	    if (getStimFlee()) {
+		// Sees another Creature
+		g.setColor(Color.RED);
+	    } else if (getStimFood() || getStimFight()) {
+		g.setColor(Color.GREEN);
+	    } else {
+		g.setColor(Color.ORANGE);
+	    }
+	} else {
+	    g.setColor(Color.ORANGE);
+	}
+	
+	g.drawLine(vision[0][0], vision[0][1], vision[1][0], vision[1][1]);
     }
-
-    g.drawLine(vision[0][0], vision[0][1], vision[1][0], vision[1][1]);
-}
 }

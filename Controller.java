@@ -39,6 +39,15 @@ public class Controller extends Vector<GameObject> {
             } else if(obj instanceof Creature && ((Creature) obj).getFoodPoints() <= 0) {
                 // Creature has starved or been eaten
 
+		Creature toDie = (Creature)obj;
+		toDie.setTimeToDivide(Creature.EATEN);
+		int toDieAncestors = toDie.getNumAncestors();
+
+		if(toDieAncestors >= Evol.generationDivisionTimes.size()) {
+		    Evol.generationDivisionTimes.add(new Vector<Long>());
+		}
+
+		Evol.generationDivisionTimes.elementAt(toDie.getNumAncestors()).add(toDie.getTimeToDivide());
                 remove(obj);
 
                 // Update modified to let controller know it needs to make another pass
