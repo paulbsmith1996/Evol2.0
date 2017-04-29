@@ -513,7 +513,7 @@ public void paint(Graphics g) {
 
     g.setColor(Color.WHITE);
     g.fillRect((int)mpfSlider.getX(), (int)mpfSlider.getY() - 5 - fontHeight,
-    mpfSlider.getWidth() / 2, fontHeight);
+    mpfSlider.getWidth(), fontHeight);
 
     g.setColor(Color.BLACK);
     g.drawString(mpf + ": " + mpfSlider.getValue(),
