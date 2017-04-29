@@ -89,14 +89,14 @@ public class Evol extends JApplet implements Runnable {
 
     private final int HERB_START_COUNT = 300;
     private final int PRED_START_COUNT = 3;
-    private final int MAX_FOOD         = 700;
+    private final int MAX_FOOD         = 500;
     private final int MAX_FOOD_AMOUNT  = 10000;
     private final int FOOD_START_COUNT = MAX_FOOD;
-    private final boolean PREDS_ON     = true;
+    private final boolean PREDS_ON     = false;
 
     // Number of food sources generated per frame rendering * 1000
     // Default is 2000
-    private final int FOOD_GEN_RATE = 1000;
+    private final int FOOD_GEN_RATE = 500;
 
     public void setEnviWidth(int width) { this.enviWidth = width; }
     public int getEnviWidth() { return this.enviWidth; }
@@ -246,7 +246,23 @@ public class Evol extends JApplet implements Runnable {
 				generationDivisionTimes.add(new Vector<Long>());
 			    }
 
-			    generationDivisionTimes.elementAt(creatNumAncestors).add(divideTime);
+			    Vector<Long> creatureGen = generationDivisionTimes.elementAt(creatNumAncestors);
+			    
+			    int creatureGenSize = creatureGen.size();
+			    int index = 0;
+
+			    // Get the index where we need to put divideTime to get a sorted vector
+			    while(index < creatureGenSize) {
+
+				if(divideTime <= creatureGen.elementAt(index)) {
+				    break;
+				}
+
+				index++;
+			    }
+
+			    creatureGen.insertElementAt(divideTime, index);
+			    //generationDivisionTimes.elementAt(creatNumAncestors).add(divideTime);
 			
 			}
 
@@ -276,9 +292,15 @@ public class Evol extends JApplet implements Runnable {
                 // (FOOD_GEN_RATE / 1000) probability of a new food source being randomly generated
                 // in the game
                 if(foodCount < MAX_FOOD && r.nextInt(1000) < FOOD_GEN_RATE) {
-                    controller.add(new Food(r.nextInt(enviWidth - OFFSET),
-                    r.nextInt(enviHeight - OFFSET),
-                    r.nextInt(MAX_FOOD_AMOUNT)));
+                    //controller.add(new Food(r.nextInt(enviWidth - OFFSET),
+                    //r.nextInt(enviHeight - OFFSET),
+                    //r.nextInt(MAX_FOOD_AMOUNT)));
+		    //int xRange = enviWidth / 2 + (2 * r.nextInt(2) - 1) * (r.nextInt(enviWidth / 4) + enviWidth / 4 - OFFSET);
+		    //int yRange = enviHeight / 2 + (2 * r.nextInt(2) - 1) * (r.nextInt(enviHeight / 4) + enviHeight / 4 - OFFSET);
+		    int xRange = r.nextInt(enviWidth - OFFSET);
+		    int yRange = enviHeight / 2;
+
+		    controller.add(new Food(xRange, yRange, r.nextInt(MAX_FOOD_AMOUNT)));
                 }
 
 
@@ -350,18 +372,40 @@ public class Evol extends JApplet implements Runnable {
 	    
 	    int gdtSize = generationDivisionTimes.size();
 
+	    //consoleSB.append(mostDeveloped.getGenome());
+	    
 	    for(int i = 0; i < gdtSize; i++) {
 
 		Vector<Long> genTimes = generationDivisionTimes.elementAt(i);
 
-		//consoleSB.append(i + ": ");
+		if(genTimes.size() > 30) {
+		    consoleSB.append(i + ": ");
+		    
+		    
+		    int sum = 0;
+		    
+		    
+		    for(long l: genTimes) {
+			//consoleSB.append(l + ", ");
+			if(l < 100000) {
+			    //sum += l;
+			    sum += 1;
+			}
+		    }
+		    
+		    consoleSB.append((double)sum / (double)genTimes.size());
+		    
 
-		for(long l: genTimes) {
-		    consoleSB.append(l + ", ");
+		    //consoleSB.append(genTimes.elementAt(genTimes.size() / 4));
+
+		    //if(i == 0) {
+		    consoleSB.append(" num creatures: " + genTimes.size());
+		    //}
+		    
+		    consoleSB.append("\n");
 		}
-
-		consoleSB.append("\n");
 	    }
+	    
 
 	    consoleSB.append("\n\n\n");
 

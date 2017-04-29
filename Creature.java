@@ -68,6 +68,7 @@ public class Creature extends GameObject {
 
     private int fleeing;
     private boolean dead;
+    private boolean divided;
 
     private Controller enviObjects;
 
@@ -84,7 +85,7 @@ public class Creature extends GameObject {
 
     // This will get updated every move, so that it increases as time goes on
     private long timeToDivide;
-    protected static final long EATEN = 50000;
+    protected static final long EATEN = 100000;
 
     public Creature(int x, int y, double rot, int species, Evol game) {
         super(x, y);
@@ -134,6 +135,7 @@ public class Creature extends GameObject {
 
         this.fleeing = 0;
         this.dead = false;
+	this.divided = false;
 
         this.foodPoints = DEFAULT_FP * (species + 1) + (2 * species * DEFAULT_FP);
         this.movementSpeed = START_MOVE_SPEED;
@@ -185,6 +187,9 @@ public class Creature extends GameObject {
 
     public boolean isDead() { return this.dead; }
     public void setDead(boolean d) { this.dead = d; }
+
+    public boolean divided() { return this.divided; }
+    public void setDivided(boolean d) { this.divided = d; }
     
     public int getStarvingRate() {
         return starvingRate;
@@ -391,7 +396,11 @@ public class Creature extends GameObject {
 
     public void die() {
         this.foodPoints = 0;
-	this.timeToDivide = EATEN;
+
+	if(!divided){
+	    this.timeToDivide = EATEN;
+	}
+
         dead = true;
     }
 
@@ -587,12 +596,12 @@ public class Creature extends GameObject {
 
         Rectangle bounds = game.getBounds();
 
-        foodPoints = DEFAULT_FP;
-        setSize(foodPoints);
+        //foodPoints = DEFAULT_FP;
+        //setSize(foodPoints);
 
-        rotate(-rot);
+        //rotate(-rot);
 
-        for(int i = 0; i < 3 - (2 * species); i++) {
+        for(int i = 0; i < 4 - (2 * species); i++) {
             Creature child = new Creature(getX(), getY(), (Math.PI / 2) * (i + 1), species, game);
 
             child.setNumAncestors(getNumAncestors() + 1);
@@ -614,7 +623,9 @@ public class Creature extends GameObject {
             child.advance(bounds);
         }
 
-        advance(bounds);
+	this.divided = true;
+	die();
+
 
         // enviObjects.printCreatureNum();
 
