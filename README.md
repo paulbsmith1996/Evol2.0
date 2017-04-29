@@ -2,11 +2,9 @@
 
 __Authors__: Paul Baird-Smith and Ross Flieger-Allison
 
-### Running the Applet
-
 To run the applet from the coommand line, compile with the command
 
-   javac Evol.java
+    javac Evol.java
 
 and then execute the program with the line
 
