@@ -97,6 +97,7 @@ public class Evol extends JApplet implements Runnable {
     // Number of food sources generated per frame rendering * 1000
     // Default is 2000
     private final int FOOD_GEN_RATE = 500;
+    private int genCount = 0;
 
     public void setEnviWidth(int width) { this.enviWidth = width; }
     public int getEnviWidth() { return this.enviWidth; }
@@ -287,23 +288,6 @@ public class Evol extends JApplet implements Runnable {
                 // Controller removes all dead creatures and consumed food sources
                 controller.testObjects();
 
-                // Generate food according to if there is enough space for it (foodCount < MAX_FOOD)
-                // and according to how quickly it should be generated. On each frame, there is a
-                // (FOOD_GEN_RATE / 1000) probability of a new food source being randomly generated
-                // in the game
-                if(foodCount < MAX_FOOD && r.nextInt(1000) < FOOD_GEN_RATE) {
-                    //controller.add(new Food(r.nextInt(enviWidth - OFFSET),
-                    //r.nextInt(enviHeight - OFFSET),
-                    //r.nextInt(MAX_FOOD_AMOUNT)));
-		    //int xRange = enviWidth / 2 + (2 * r.nextInt(2) - 1) * (r.nextInt(enviWidth / 4) + enviWidth / 4 - OFFSET);
-		    //int yRange = enviHeight / 2 + (2 * r.nextInt(2) - 1) * (r.nextInt(enviHeight / 4) + enviHeight / 4 - OFFSET);
-		    int xRange = r.nextInt(enviWidth - OFFSET);
-		    int yRange = enviHeight / 2;
-
-		    controller.add(new Food(xRange, yRange, r.nextInt(MAX_FOOD_AMOUNT)));
-                }
-
-
                 // Repopulate the game with more predators if they all die out
                 if(predCount < 1 && r.nextInt(10) < 4 && PREDS_ON) {
 
@@ -328,22 +312,35 @@ public class Evol extends JApplet implements Runnable {
 
 
                 // Code to repopulate game with herbivores. Commented out but could be used if needed.
-                /*
-                if(vegCount < 1 && r.nextInt(10) < 4) {
-                Creature newVeg = new Creature(r.nextInt(450), r.nextInt(450), 0, 0, this);
-                controller.add(newVeg);
-            }
-            */
+                
+                if(vegCount < 1) {
 
-            if(vegCount == 0) {
-                consoleSB.append("\n\n----------ALL HERBIVORES DIED--------------\n\n");
-		repaint();
-                stop();
-            }
+		    genCount++;
 
+		    for(int i = 0; i < HERB_START_COUNT; i++) {
+			Creature newVeg = new Creature(r.nextInt(enviWidth - OFFSET), 
+						       r.nextInt(enviHeight - OFFSET), 
+						       0, 0, this);
+			newVeg.setNumAncestors(genCount);
+			controller.add(newVeg);
+		    }
 
+		    // Generate FOOD_START_COUNT random Food sources within reasonable bounds
+		    for(int i = 0; i < FOOD_START_COUNT; i++) {
+			controller.add(new Food(r.nextInt(enviWidth - OFFSET), // x coordinate
+						r.nextInt(enviHeight - OFFSET), // y coordinate
+						r.nextInt(MAX_FOOD_AMOUNT))); // size
+		    }
+		}
+            
 
-
+		/*
+		if(vegCount == 0) {
+		    consoleSB.append("\n\n----------ALL HERBIVORES DIED--------------\n\n");
+		    repaint();
+		    stop();
+		}
+		*/
 
             // Sleep to allow user's eyes to actually process what is going
             // on.

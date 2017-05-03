@@ -423,7 +423,6 @@ public class Creature extends GameObject {
             food.setAmount(0);
         }
 
-        setSize(foodPoints);
     }
 
     public void setSize(int size) {
@@ -575,60 +574,8 @@ public class Creature extends GameObject {
     }
 
     public long divide() {
-        divideCount++;
-
-        String genome = "";
-
-        if(divideCount % 10 == 0) {
-            //printGenome();
-            genome = getGenome();
-
-            // Indexing of genes starts at 1
-
-            // Needs fixing!!!!!!!
-            if(species == 0) {
-                //herbDivCount++;
-                //instCountinGene += (double)getInstCountinGene(1, "C");
-                //System.out.println(instCountinGene / (double)(herbDivCount));
-                //System.out.println(getInstCountinGene(1, "C"));
-            }
-        }
-
-        Rectangle bounds = game.getBounds();
-
-        //foodPoints = DEFAULT_FP;
-        //setSize(foodPoints);
-
-        //rotate(-rot);
-
-        for(int i = 0; i < 4 - (2 * species); i++) {
-            Creature child = new Creature(getX(), getY(), (Math.PI / 2) * (i + 1), species, game);
-
-            child.setNumAncestors(getNumAncestors() + 1);
-
-            for(int geneNum = 0; geneNum < genes.length; geneNum++) {
-
-                // Copy parent's genome into its children's
-                child.setGene(geneNum, this.getGene(geneNum));
-
-            }
-
-            int numMutations = rand.nextInt(MUTATION_RATE);
-
-            for(int j = 0; j < numMutations; j++) {
-                child.mutate();
-            }
-
-            enviObjects.add(child);
-            child.advance(bounds);
-        }
-
-	this.divided = true;
+	divided = true;
 	die();
-
-
-        // enviObjects.printCreatureNum();
-
         return timeToDivide;
     }
 
