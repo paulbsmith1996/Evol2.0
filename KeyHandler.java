@@ -4,6 +4,7 @@ public class KeyHandler extends KeyAdapter implements KeyListener{
 
     private boolean paused = false;
     private boolean printTimes = false;
+    private boolean printGenome = false;
     private boolean writeToFile = false;
 
     public boolean getPaused() { return this.paused; }
@@ -11,6 +12,9 @@ public class KeyHandler extends KeyAdapter implements KeyListener{
 
     public boolean getPrintTimes() { return this.printTimes; }
     public void setPrintTimes(boolean p) { this.printTimes = p; }
+
+    public boolean getPrintGenome() { return this.printGenome; }
+    public void setPrintGenome(boolean g) { this.printGenome = g; }
 
     public boolean getWriteToFile() { return this.writeToFile; }
     public void setWriteToFile(boolean w) { this.writeToFile = w; }
@@ -25,6 +29,8 @@ public class KeyHandler extends KeyAdapter implements KeyListener{
 	    printTimes = true;
 	} else if(key == KeyEvent.VK_W) {
 	    writeToFile = true;
+	} else if(key == KeyEvent.VK_G) {
+	    printGenome = true;
 	}
     }
 

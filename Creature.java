@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.util.Scanner;
+import java.util.Vector;
 
 
 public class Creature extends GameObject {
@@ -30,14 +31,16 @@ public class Creature extends GameObject {
     private final int START_MOVE_SPEED = 10;
     private final int START_EAT_SPEED = 100;
     private final int DEFAULT_FP = 3000;
-    private final int DEFAULT_STARVING_RATE = 20;
+    // default is 20
+    private final int DEFAULT_STARVING_RATE = 10;
     private final int VISION_DISTANCE = 100;
 
     // Default mutation rate is 10
-    private final int MUTATION_RATE = 8;
+    protected static final int MUTATION_RATE = 6;
 
     private int starvingRate = DEFAULT_STARVING_RATE;
-    private int divisionThreshold = DEFAULT_DIVISION_THRESHOLD;
+    // usually just set to default
+    private int divisionThreshold = 10 * DEFAULT_DIVISION_THRESHOLD;
 
     // How far off the Creature can be from the center of a food source
     private final int MARGIN_OF_ERROR = 25;
@@ -52,7 +55,8 @@ public class Creature extends GameObject {
     // the window that the creature is looking at
     private int[][] vision;
 
-    private int[] genes;
+    private long[] genes;
+    protected static final int NUM_GENES = 3;
     private int stimuli = 0;
 
     private boolean stimulated;
@@ -62,8 +66,8 @@ public class Creature extends GameObject {
     private final int STIM_FIGHT = 4;
     private final int ON_FOOD = 8;
 
-    // NUM_INSTRUCTIONS * INSTRUCTION_LENGTH <= 32
-    private final int NUM_INSTRUCTIONS = 15;
+    // NUM_INSTRUCTIONS * INSTRUCTION_LENGTH <= 64
+    private final int NUM_INSTRUCTIONS = 20;
     private final int INSTRUCTION_LENGTH = 2;
 
     private int fleeing;
@@ -73,6 +77,7 @@ public class Creature extends GameObject {
     private Controller enviObjects;
 
     private int foodPoints;
+    private int amountEaten;
 
     private int eatSpeed;
     private int movementSpeed;
@@ -104,7 +109,7 @@ public class Creature extends GameObject {
         this.numAncestors = 0;
 
         this.species = species;
-        this.genes = new int[5];
+        this.genes = new long[NUM_GENES];
 
         this.vision = new int[2][2];
 
@@ -123,21 +128,16 @@ public class Creature extends GameObject {
 
         // Set random behavior for genes
         for(int i = 0; i < genes.length; i++) {
-            genes[i] = rand.nextInt();
+            genes[i] = rand.nextLong();
 
-            // Set some instructions in gene relating to predator stimulus
-            if(i == 1) {
-                genes[i] |= 2;
-                genes[i] &= (~1);
-            }
         }
-
 
         this.fleeing = 0;
         this.dead = false;
 	this.divided = false;
 
         this.foodPoints = DEFAULT_FP * (species + 1) + (2 * species * DEFAULT_FP);
+	this.amountEaten = 0;
         this.movementSpeed = START_MOVE_SPEED;
         this.eatSpeed = START_EAT_SPEED;
 
@@ -161,8 +161,11 @@ public class Creature extends GameObject {
 	this.timeToDivide = 0;
     }
 
-    public void setGene(int geneNum, int gene) { genes[geneNum] = gene; }
-    public int getGene(int geneNum) { return this.genes[geneNum]; }
+    public void setAmountEaten(int ae) { this.amountEaten = ae; }
+    public int getAmountEaten() { return this.amountEaten; }
+
+    public void setGene(int geneNum, long gene) { genes[geneNum] = gene; }
+    public long getGene(int geneNum) { return this.genes[geneNum]; }
 
     public void setStimFood() { this.stimuli |= STIM_FOOD; }
     public boolean getStimFood() { return (this.stimuli& STIM_FOOD) != 0; }
@@ -416,10 +419,12 @@ public class Creature extends GameObject {
         if (eatSpeed <= foodAmount) {
             // There is enough for the Creature to have a full bite
             foodPoints += eatSpeed;
+	    amountEaten += eatSpeed;
             food.setAmount(foodAmount - eatSpeed);
         } else {
             // Not enough food for the Creature to have a full bite
             foodPoints += foodAmount;
+	    amountEaten += foodAmount;
             food.setAmount(0);
         }
 
@@ -480,44 +485,31 @@ public class Creature extends GameObject {
 
             if (species < 2) {
                 foodPoints -= starvingRate;
-                setSize(foodPoints);
+                //setSize(foodPoints);
 
                 // 32 bits in an int - 2 bits per instruction = 16 instructions max
-                if (getStimFlee()) {
-
-                    // Spotted a predator
-                    execute(genes[1], instCount);
-
-                } else if (getOnFood()) {
+                if (getOnFood()) {
 
                     // On a food source
                     execute(genes[0], instCount);
 
-                } else if (getStimFight()) {
-
-                    // Spotted prey
-                    execute(genes[2], instCount);
-
                 } else if (getStimFood()) {
 
                     // Spotted food
-                    execute(genes[3], instCount);
+                    execute(genes[1], instCount);
 
                 } else {
 
                     // Unstimulated
-                    execute(genes[4], instCount);
+                    execute(genes[2], instCount);
 
                 }
 
                 instCount++;
                 instCount %= NUM_INSTRUCTIONS;
 
-                if (checkDivide()) {
-                    return divide();
-                }
 		
-            }
+	    }
         }
 
         return -1;
@@ -526,7 +518,7 @@ public class Creature extends GameObject {
     
     // Will execute the moves corresponding to the sequence of moves
     // starting at the indicated start bit in the gene
-    public void execute(int gene, int inst) {
+    public void execute(long gene, int inst) {
         // 111111111111 = 2^13 - 1 = 4095
 
         //long moveSeq = (((4095 << start) & gene) >> (64 - start));
@@ -575,6 +567,7 @@ public class Creature extends GameObject {
 
     public long divide() {
 	divided = true;
+	divideCount++;
 	die();
         return timeToDivide;
     }
@@ -583,31 +576,85 @@ public class Creature extends GameObject {
     public void mutate() {
 
         // Mutate an instruction randomly
-        int mutIndex = rand.nextInt(4) << rand.nextInt(32);
+        int mutIndex = rand.nextInt(4) << rand.nextInt(64);
 
-        int geneNum = rand.nextInt(5);
+        int geneNum = rand.nextInt(NUM_GENES);
 
         // Toggles the bit at the mutIndex index
         setGene(geneNum, genes[geneNum] ^= mutIndex);
     }
 
+    public void transpose(int geneNum, String transposon) {
+
+	long gene = genes[geneNum];
+	int tLength = transposon.length();
+
+	char[] transposonLetters = transposon.toCharArray();
+
+	String transposonR = "";
+
+	for(int index = transposonLetters.length; index >= 0; index--) {
+	    transposonR += transposonLetters[index];
+	}
+
+	// Get the binary representation of the gene
+	String geneStr = Long.toBinaryString(gene);
+
+	// Find first flanking sequence
+	int FSIndex = geneStr.indexOf(transposon);
+	String geneStrCopy = "" + geneStr;
+	
+	// Find replications of the flanking sequence
+	Vector<Integer> possiblePositions = new Vector<Integer>();
+
+	geneStrCopy.replaceAll(transposon, "R");
+	geneStrCopy.replaceAll(transposonR, "R");
+
+	int cutOffFromStart = 0;
+
+	// Get all indices preceded or followed by the transposon or its reverse
+	while(geneStrCopy.contains("R")) {
+
+	    int firstInstanceIndex = geneStrCopy.indexOf("R");
+	    
+	    if(!possiblePositions.contains(firstInstanceIndex + cutOffFromStart)) {
+		possiblePositions.add(firstInstanceIndex + cutOffFromStart);
+	    }
+
+	    if(!possiblePositions.contains(firstInstanceIndex + cutOffFromStart + tLength)
+	       && firstInstanceIndex + cutOffFromStart + tLength < geneStr.length()) {
+		possiblePositions.add(firstInstanceIndex + cutOffFromStart + tLength);
+	    }
+
+	    geneStrCopy = geneStrCopy.substring(firstInstanceIndex + 1);
+	    cutOffFromStart += firstInstanceIndex + tLength;
+	}
+
+	// Choose a random place to put the transposon
+	int newPos = possiblePositions.elementAt(rand.nextInt(possiblePositions.size()));
+
+	// Move transposon to the new spot in the gene
+	geneStr.replaceFirst(transposon, "");
+	geneStr = geneStr.substring(0, newPos) + transposon + geneStr.substring(newPos + 1);
+
+	setGene(geneNum, Long.parseLong(geneStr, 2));
+	
+
+    }
+
     public void printGenome() {
         System.out.print(divideCount + " divisions have occurred --- Species: " + species + "\n\n"
         + "Gene 1 (On Food)     : " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 2 (See Predator): " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 3 (See Prey)    : " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 4 (See Food)    : " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 5 (Unstimulated): " + toInst(genes[4], NUM_INSTRUCTIONS) + "\n\n"
+        + "Gene 2 (See Food)    : " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
+        + "Gene 3 (Unstimulated): " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n"
         + "----------------------------------------------\n\n");
     }
 
     public String getGenome() {
         return "\n\n"    + divideCount + " divisions have occurred --- Species: " + species + "\n\n"
         + "Gene 1 (On Food)     : " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 2 (See Predator): " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 3 (See Prey)    : " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 4 (See Food)    : " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 5 (Unstimulated): " + toInst(genes[4], NUM_INSTRUCTIONS) + "\n\n"
+        + "Gene 2 (See Food)    : " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
+        + "Gene 3 (Unstimulated): " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n\n"
         + "----------------------------------------------";
 
     }
@@ -648,14 +695,15 @@ public class Creature extends GameObject {
         return count;
     }
 
-    public String toInst(int gene, int numInst) {
+    public String toInst(long gene, int numInst) {
 
         String result = "";
 
         for(int i = 0; i < numInst; i++) {
             //int pos = i * INSTRUCTION_LENGTH;
 
-            int toConvert = gene >> (i * INSTRUCTION_LENGTH) & 3;
+            long toConvertL = gene >> (i * INSTRUCTION_LENGTH) & 3;
+	    int toConvert = (int)toConvertL;
 
             String inst = INSTRUCTIONS[toConvert];
 

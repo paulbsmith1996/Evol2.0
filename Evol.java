@@ -72,6 +72,8 @@ public class Evol extends JApplet implements Runnable {
     // the division times for the first generation of creatures, initially
     // spawned when the applet initializes
     public static Vector<Vector<Long>> generationDivisionTimes;
+    public static Vector<Vector<Integer>> genScores;
+    public static Vector<Creature> curGen;
 
     // Used to generate random values
     private MersenneTwister r;
@@ -87,16 +89,18 @@ public class Evol extends JApplet implements Runnable {
     // STARTING CONDITIONS
     /************************************/
 
-    private final int HERB_START_COUNT = 300;
+    private final int MAX_TIME_ALIVE = 5000;
+
+    private final int HERB_START_COUNT = 500;
     private final int PRED_START_COUNT = 3;
-    private final int MAX_FOOD         = 500;
+    private final int MAX_FOOD         = 200;
     private final int MAX_FOOD_AMOUNT  = 10000;
     private final int FOOD_START_COUNT = MAX_FOOD;
     private final boolean PREDS_ON     = false;
 
     // Number of food sources generated per frame rendering * 1000
     // Default is 2000
-    private final int FOOD_GEN_RATE = 500;
+    private final int FOOD_GEN_RATE = 5000;
     private int genCount = 0;
 
     public void setEnviWidth(int width) { this.enviWidth = width; }
@@ -108,21 +112,31 @@ public class Evol extends JApplet implements Runnable {
 
     public Rectangle getEnviBounds() { return new Rectangle(0, 0, enviWidth, enviHeight); }
 
-    // Bookkeeping for starting main game thread
-    public void start() {
-
-        if (ticker == null || !ticker.isAlive()) {
-            running = true;
-            ticker = new Thread(this);
-            ticker.setPriority(Thread.MIN_PRIORITY);
-            ticker.start();
-        }
-
-        resize(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-        requestFocusInWindow();
+    public int xFoodRange() { 
+	return r.nextInt(enviWidth - 6 * OFFSET) + 3 * OFFSET; 
+	//return enviWidth / 2;
+	//return r.nextInt(enviWidth - OFFSET);
+    }
+    public int yFoodRange() { 
+	return enviHeight / 2; 
+	//return r.nextInt(enviHeight - OFFSET);
     }
 
+    public int xCreatureRange() { 
+	return r.nextInt(enviWidth - 4 * OFFSET) + 2 * OFFSET; 
+	//return r.nextInt(enviWidth - OFFSET);
+	//return enviWidth / 2;
+    }
+
+    public int yCreatureRange() { 
+	return 75; 
+	//return r.nextInt(enviHeight - OFFSET);
+    }
+
+    public double initAngle() { 
+	//return r.nextInt(4) * Math.PI; 
+	return 0;
+    }
 
     // Initialize Random object and Controller object
     public void init() {
@@ -157,23 +171,29 @@ public class Evol extends JApplet implements Runnable {
 
         controller = new Controller();
 	generationDivisionTimes = new Vector<Vector<Long>>();
+	genScores = new Vector<Vector<Integer>>();
+	curGen = new Vector<Creature>();
 
         moveCount = 0;
         mostAncestors = 0;
         firstCheck = true;
 
+
         // Generate FOOD_START_COUNT random Food sources within reasonable bounds
         for(int i = 0; i < FOOD_START_COUNT; i++) {
-            controller.add(new Food(r.nextInt(enviWidth - OFFSET), // x coordinate
-            r.nextInt(enviHeight - OFFSET), // y coordinate
-            r.nextInt(MAX_FOOD_AMOUNT))); // size
+            controller.add(new Food(xFoodRange(), // x coordinate
+				    yFoodRange(), // y coordinate
+				    r.nextInt(MAX_FOOD_AMOUNT))); // size
         }
 
         // Generate HERB_START_COUNT random Creatures within reasonable bounds
         for(int i = 0; i < HERB_START_COUNT; i++) {
-            controller.add(new Creature(r.nextInt(enviWidth - OFFSET), // x coordinate
-            r.nextInt(enviHeight - OFFSET), // y coordinate
-            0, 0, this));
+	    Creature newCreat = new Creature(xCreatureRange(), // x coordinate
+					     yCreatureRange(), // y coordinate
+					     initAngle(), 0, this);
+	    controller.add(newCreat);
+	    //curGen.add(newCreat);
+
         }
 
         herbCount = HERB_START_COUNT;
@@ -190,6 +210,21 @@ public class Evol extends JApplet implements Runnable {
 
 
 
+    }
+
+    // Bookkeeping for starting main game thread
+    public void start() {
+
+        if (ticker == null || !ticker.isAlive()) {
+            running = true;
+            ticker = new Thread(this);
+            ticker.setPriority(Thread.MIN_PRIORITY);
+            ticker.start();
+        }
+
+        resize(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        requestFocusInWindow();
     }
 
     /**
@@ -234,7 +269,6 @@ public class Evol extends JApplet implements Runnable {
                             creat.setColor(Color.BLUE);
                         }
 
-
 			// Move the creature. If the return value is greater than 0,
 			// this means the creature has divided
 			long divideTime = creat.move();
@@ -267,6 +301,11 @@ public class Evol extends JApplet implements Runnable {
 			
 			}
 
+			if(creat.getTimeToDivide() > MAX_TIME_ALIVE) {
+			    creat.die();
+			    //System.out.println("Time limit reached");
+			}
+
 			if(creat.getTimeToDivide() < Creature.EATEN) {
 			    creat.setTimeToDivide( creat.getTimeToDivide() + 1 );
 			}
@@ -287,6 +326,17 @@ public class Evol extends JApplet implements Runnable {
 
                 // Controller removes all dead creatures and consumed food sources
                 controller.testObjects();
+
+                // Generate food according to if there is enough space for it (foodCount < MAX_FOOD)
+                // and according to how quickly it should be generated. On each frame, there is a
+                // (FOOD_GEN_RATE / 1000) probability of a new food source being randomly generated
+                // in the game                                         
+                if(foodCount < MAX_FOOD && r.nextInt(1000) < FOOD_GEN_RATE) {
+                    controller.add(new Food(xFoodRange(),
+					    yFoodRange(),
+					    r.nextInt(MAX_FOOD_AMOUNT)));
+                }
+
 
                 // Repopulate the game with more predators if they all die out
                 if(predCount < 1 && r.nextInt(10) < 4 && PREDS_ON) {
@@ -313,39 +363,103 @@ public class Evol extends JApplet implements Runnable {
 
                 // Code to repopulate game with herbivores. Commented out but could be used if needed.
                 
-                if(vegCount < 1) {
+                if(vegCount == 0) {
+
+		    /*
+		    for(Creature c: curGen) {
+			System.out.print(c.getAmountEaten() + " ");
+		    }
+
+		    System.out.println("\n");
+		    */
+		    
 
 		    genCount++;
 
-		    for(int i = 0; i < HERB_START_COUNT; i++) {
-			Creature newVeg = new Creature(r.nextInt(enviWidth - OFFSET), 
-						       r.nextInt(enviHeight - OFFSET), 
-						       0, 0, this);
-			newVeg.setNumAncestors(genCount);
-			controller.add(newVeg);
-		    }
+		    controller.removeFood();
 
+		    // Important to compute this outside of for loop. We only want the
+		    // ancestors to have their genomes passed on, not the current generation's
+		    int curGenSize = curGen.size();
+		    
+		    int curGenIndex = 0;
+
+		    //boolean restart = true;
+
+		    /*
+		    for(Creature creature: curGen) {
+
+			if(creature.getAmountEaten() != 0) {
+			    restart = false;
+			}
+
+		    }
+		    */
+
+		    /*
+		    if(restart) {
+			consoleSB.append("No creature ate food. \n");
+		    }
+		    */
+
+		    for(int i = 0; i < HERB_START_COUNT; i++) {
+			Creature newVeg = new Creature(xCreatureRange(), 
+						       yCreatureRange(), 
+						       initAngle(), 0, this);
+
+
+			/*
+			if(restart) {
+			    for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+				newVeg.setGene(geneNum, r.nextLong());
+			    }
+			}
+			*/
+
+			//if(!restart) {
+			    // Set the child's genome to be mutated from an ancestor's genome
+			if(curGenIndex > curGenSize / 2) {
+			    curGenIndex = 0;
+			}
+			
+			Creature ancestor = curGen.elementAt(curGenIndex);
+			
+			for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+			    newVeg.setGene(geneNum, ancestor.getGene(geneNum));
+			}
+			
+			
+			//int numMutations = r.nextInt(Creature.MUTATION_RATE);
+			
+			for(int j = 0; j < Creature.MUTATION_RATE; j++) {
+			    newVeg.mutate();
+			}
+			
+			//}
+			
+			newVeg.setNumAncestors(genCount);
+
+			controller.add(newVeg);
+
+			if(curGenIndex > curGenSize / 2) {
+			    curGenIndex = 0;
+			}
+
+			
+			curGenIndex++;
+		}
+
+		    this.curGen = new Vector<Creature>();
+
+		    
 		    // Generate FOOD_START_COUNT random Food sources within reasonable bounds
 		    for(int i = 0; i < FOOD_START_COUNT; i++) {
-			controller.add(new Food(r.nextInt(enviWidth - OFFSET), // x coordinate
-						r.nextInt(enviHeight - OFFSET), // y coordinate
+			controller.add(new Food(xFoodRange(), // x coordinate
+						yFoodRange(), // y coordinate
 						r.nextInt(MAX_FOOD_AMOUNT))); // size
 		    }
 		}
             
-
-		/*
-		if(vegCount == 0) {
-		    consoleSB.append("\n\n----------ALL HERBIVORES DIED--------------\n\n");
-		    repaint();
-		    stop();
-		}
-		*/
-
-            // Sleep to allow user's eyes to actually process what is going
-            // on.
-            // If only we could see more frames per second...
-
         }
 
         if(mostDeveloped != null) {
@@ -360,6 +474,14 @@ public class Evol extends JApplet implements Runnable {
         }
 	*/
 
+	if(keyHandler.getPrintGenome()) {
+	    keyHandler.setPrintGenome(false);
+	    
+	    if(mostDeveloped != null) {
+		consoleSB.append(mostDeveloped.getGenome());
+	    }
+	}
+	
 	// We either want to print something to the console or write it to a file
 	if(keyHandler.getPrintTimes() || keyHandler.getWriteToFile()) {
 	    keyHandler.setPrintTimes(false);
@@ -368,40 +490,42 @@ public class Evol extends JApplet implements Runnable {
 	    consoleSB.append("Division times for each generation:\n\n");
 	    
 	    int gdtSize = generationDivisionTimes.size();
-
-	    //consoleSB.append(mostDeveloped.getGenome());
+	    
 	    
 	    for(int i = 0; i < gdtSize; i++) {
 
-		Vector<Long> genTimes = generationDivisionTimes.elementAt(i);
+		Vector<Integer> genScore = genScores.elementAt(i);
 
-		if(genTimes.size() > 30) {
-		    consoleSB.append(i + ": ");
+		
+		if(genScore.size() > 30) {
+		    //consoleSB.append(i + ": ");
 		    
-		    
+		    /*
 		    int sum = 0;
 		    
 		    
-		    for(long l: genTimes) {
+		    for(int score: genScore) {
 			//consoleSB.append(l + ", ");
-			if(l < 100000) {
+			//if(l < 100000) {
 			    //sum += l;
-			    sum += 1;
-			}
+			    sum += score;
+			    //}
 		    }
 		    
-		    consoleSB.append((double)sum / (double)genTimes.size());
-		    
+		    consoleSB.append((double)sum / (double)genScore.size());
+		    */
 
-		    //consoleSB.append(genTimes.elementAt(genTimes.size() / 4));
+		    consoleSB.append(genScore.elementAt(genScore.size() / 2));
 
-		    //if(i == 0) {
-		    consoleSB.append(" num creatures: " + genTimes.size());
-		    //}
+		    if(genScore.size() != HERB_START_COUNT) {
+			consoleSB.append(" num creatures: " + genScore.size());
+		    }
 		    
 		    consoleSB.append("\n");
 		}
+	    
 	    }
+	    
 	    
 
 	    consoleSB.append("\n\n\n");
@@ -446,6 +570,10 @@ public class Evol extends JApplet implements Runnable {
 
             // Call draw for all GameObjects in our controller
             repaint();
+	    
+            // Sleep to allow user's eyes to actually process what is going
+            // on.
+            // If only we could see more frames per second...
 
             try {
                 Thread.sleep(1000 / FPS);
@@ -523,7 +651,7 @@ public void paint(Graphics g) {
     SLIDER_WIDTH, fontHeight);
 
     g.setColor(Color.BLACK);
-    g.drawString("Number of divisions: " + Creature.divideCount,
+    g.drawString("Max food points hits: " + Creature.divideCount,
     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40);
 
 
@@ -532,7 +660,7 @@ public void paint(Graphics g) {
     SLIDER_WIDTH, fontHeight);
 
     g.setColor(Color.BLACK);
-    g.drawString("Most ancestors: " + mostAncestors,
+    g.drawString("Generation Number: " + mostAncestors,
     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60);
 
     g.setColor(Color.WHITE);

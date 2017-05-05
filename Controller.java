@@ -39,9 +39,44 @@ public class Controller extends Vector<GameObject> {
             } else if(obj instanceof Creature && ((Creature) obj).getFoodPoints() <= 0) {
                 // Creature has starved or been eaten
 
+
+
+
 		Creature toDie = (Creature)obj;
 		
+		int creatNumAncestors = toDie.getNumAncestors();
+		int amountEaten = toDie.getAmountEaten();
+		
+		if(creatNumAncestors >= Evol.genScores.size()) {
+		    Evol.genScores.add(new Vector<Integer>());
+		}
+		
+		Vector<Integer> creatureGen = Evol.genScores.elementAt(creatNumAncestors);
+		
+		int creatureGenSize = creatureGen.size();
+		int index = 0;
+		
+		// Get the index where we need to put divideTime to get a sorted vector           
+		while(index < creatureGenSize) {
+		    
+		    if(amountEaten >= creatureGen.elementAt(index)) {
+			break;
+		    }
+		    
+		    index++;
+		}
+		
+		creatureGen.insertElementAt(amountEaten, index);
+		Evol.curGen.insertElementAt(toDie, index);
+		
+
+
+
+
+
+
 		if(!toDie.divided()) {
+		    
 		    toDie.setTimeToDivide(Creature.EATEN);
 		    int toDieAncestors = toDie.getNumAncestors();
 		    
@@ -50,10 +85,11 @@ public class Controller extends Vector<GameObject> {
 		    }
 		    
 		    Evol.generationDivisionTimes.elementAt(toDie.getNumAncestors()).add(toDie.getTimeToDivide());
+		    
 		}
-
+		
                 remove(obj);
-
+		
                 // Update modified to let controller know it needs to make another pass
                 modified = true;
                 break;
@@ -68,6 +104,27 @@ public class Controller extends Vector<GameObject> {
         if(modified) {
             testObjects();
         }
+    }
+
+    public void removeFood() {
+
+	boolean modified = false;
+	int size = size();
+
+	for(int index = 0; index < size; index++) {
+
+            GameObject obj = elementAt(index);
+
+	    if(obj instanceof Food) {
+		remove(obj);
+		modified = true;
+		break;
+	    }
+	}
+
+	if(modified) {
+	    removeFood();
+	}
     }
 
     // Helpful method that prints out the current number of Creatures that are alive.
