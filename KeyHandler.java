@@ -1,6 +1,6 @@
 import java.awt.event.*;
 
-public class KeyHandler extends KeyAdapter implements KeyListener{
+public class KeyHandler extends KeyAdapter implements KeyListener {
 
     private boolean paused = false;
     private boolean printTimes = false;
@@ -20,25 +20,25 @@ public class KeyHandler extends KeyAdapter implements KeyListener{
     public void setWriteToFile(boolean w) { this.writeToFile = w; }
 
     public void keyPressed(KeyEvent e) {
-
-        int key = e.getKeyCode();
-
-        if(key == KeyEvent.VK_SPACE) {
-            paused = !paused;
-        } else if(key == KeyEvent.VK_P) {
-	    printTimes = true;
-	} else if(key == KeyEvent.VK_W) {
-	    writeToFile = true;
-	} else if(key == KeyEvent.VK_G) {
-	    printGenome = true;
-	}
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_SPACE:
+                paused = !paused;
+                break;
+            case KeyEvent.VK_P:
+                printTimes = true;
+                break;
+            case KeyEvent.VK_W:
+                writeToFile = true;
+                break;
+            case KeyEvent.VK_G:
+                printGenome = true;
+                break;
+            default:
+                break;
+        }
     }
 
-    public void keyReleased(KeyEvent e) {
+    public void keyReleased(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {}
 
-    }
-
-    public void keyTyped(KeyEvent e) {
-
-    }
 }
