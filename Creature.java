@@ -390,7 +390,6 @@ public class Creature extends GameObject {
 
             }
 
-            //eating = false;
             stimuli &= (~ON_FOOD);
 
         }
@@ -593,7 +592,7 @@ public class Creature extends GameObject {
 
 	String transposonR = "";
 
-	for(int index = transposonLetters.length; index >= 0; index--) {
+	for(int index = transposonLetters.length - 1; index >= 0; index--) {
 	    transposonR += transposonLetters[index];
 	}
 
@@ -607,15 +606,15 @@ public class Creature extends GameObject {
 	// Find replications of the flanking sequence
 	Vector<Integer> possiblePositions = new Vector<Integer>();
 
-	geneStrCopy.replaceAll(transposon, "R");
-	geneStrCopy.replaceAll(transposonR, "R");
+	geneStrCopy.replaceAll(transposon, "M");
+	geneStrCopy.replaceAll(transposonR, "M");
 
 	int cutOffFromStart = 0;
 
 	// Get all indices preceded or followed by the transposon or its reverse
-	while(geneStrCopy.contains("R")) {
+	while(geneStrCopy.contains("M")) {
 
-	    int firstInstanceIndex = geneStrCopy.indexOf("R");
+	    int firstInstanceIndex = geneStrCopy.indexOf("M");
 	    
 	    if(!possiblePositions.contains(firstInstanceIndex + cutOffFromStart)) {
 		possiblePositions.add(firstInstanceIndex + cutOffFromStart);
@@ -746,5 +745,12 @@ public class Creature extends GameObject {
 	}
 	
 	g.drawLine(vision[0][0], vision[0][1], vision[1][0], vision[1][1]);
+    }
+
+    public static void main(String[] args) {
+	Creature c = new Creature(0, 0, 0, 0, new Evol());
+	System.out.println(c.getGenome());
+	c.transpose(0, "00");
+	System.out.println(c.getGenome());
     }
 }
