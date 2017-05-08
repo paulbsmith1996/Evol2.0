@@ -364,100 +364,7 @@ public class Evol extends JApplet implements Runnable {
                 // Code to repopulate game with herbivores. Commented out but could be used if needed.
                 
                 if(vegCount == 0) {
-
-		    /*
-		    for(Creature c: curGen) {
-			System.out.print(c.getAmountEaten() + " ");
-		    }
-
-		    System.out.println("\n");
-		    */
-		    
-
-		    genCount++;
-
-		    controller.removeFood();
-
-		    // Important to compute this outside of for loop. We only want the
-		    // ancestors to have their genomes passed on, not the current generation's
-		    int curGenSize = curGen.size();
-		    
-		    int curGenIndex = 0;
-
-		    //boolean restart = true;
-
-		    /*
-		    for(Creature creature: curGen) {
-
-			if(creature.getAmountEaten() != 0) {
-			    restart = false;
-			}
-
-		    }
-		    */
-
-		    /*
-		    if(restart) {
-			consoleSB.append("No creature ate food. \n");
-		    }
-		    */
-
-		    for(int i = 0; i < HERB_START_COUNT; i++) {
-			Creature newVeg = new Creature(xCreatureRange(), 
-						       yCreatureRange(), 
-						       initAngle(), 0, this);
-
-
-			/*
-			if(restart) {
-			    for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-				newVeg.setGene(geneNum, r.nextLong());
-			    }
-			}
-			*/
-
-			//if(!restart) {
-			    // Set the child's genome to be mutated from an ancestor's genome
-			if(curGenIndex > curGenSize / 2) {
-			    curGenIndex = 0;
-			}
-			
-			Creature ancestor = curGen.elementAt(curGenIndex);
-			
-			for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-			    newVeg.setGene(geneNum, ancestor.getGene(geneNum));
-			}
-			
-			
-			//int numMutations = r.nextInt(Creature.MUTATION_RATE);
-			
-			for(int j = 0; j < Creature.MUTATION_RATE; j++) {
-			    newVeg.mutate();
-			}
-			
-			//}
-			
-			newVeg.setNumAncestors(genCount);
-
-			controller.add(newVeg);
-
-			if(curGenIndex > curGenSize / 2) {
-			    curGenIndex = 0;
-			}
-
-			
-			curGenIndex++;
-		}
-
-		    this.curGen = new Vector<Creature>();
-
-		    
-		    // Generate FOOD_START_COUNT random Food sources within reasonable bounds
-		    for(int i = 0; i < FOOD_START_COUNT; i++) {
-			controller.add(new Food(xFoodRange(), // x coordinate
-						yFoodRange(), // y coordinate
-						r.nextInt(MAX_FOOD_AMOUNT))); // size
-		    }
+		    createNewGeneration();
 		}
             
         }
@@ -588,110 +495,207 @@ public class Evol extends JApplet implements Runnable {
     }
 }
 
+    public void createNewGeneration() {
 
-/**
-* Draw all GameObjects that are currently alive and not consumed
-*/
-public void paint(Graphics g) {
-
-    /********************* Draw background **********************/
-
-
-    g.setColor(Color.LIGHT_GRAY);
-    g.fillRect(0, 0, enviWidth, enviHeight);
-
-
-
-
-    /********** Draw GameObjects in front of background *********/
-
-    if(GRAPHICS) {
-        controller.draw(g);
+	/*
+	  for(Creature c: curGen) {
+	  System.out.print(c.getAmountEaten() + " ");
+	  }
+	  
+	  System.out.println("\n");
+	*/
+	
+	
+	genCount++;
+	
+	controller.removeFood();
+	
+	// Important to compute this outside of for loop. We only want the
+	// ancestors to have their genomes passed on, not the current generation's
+	int curGenSize = curGen.size();
+	
+	int curGenIndex = 0;
+	
+	//boolean restart = true;
+	
+	/*
+	  for(Creature creature: curGen) {
+	  
+	  if(creature.getAmountEaten() != 0) {
+	  restart = false;
+	  }
+	  
+	  }
+	*/
+	
+	/*
+	  if(restart) {
+	  consoleSB.append("No creature ate food. \n");
+	  }
+	*/
+	
+	for(int i = 0; i < HERB_START_COUNT; i++) {
+	    Creature newVeg = new Creature(xCreatureRange(), 
+					   yCreatureRange(), 
+					   initAngle(), 0, this);
+	    
+	    
+	    /*
+	      if(restart) {
+	      for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+	      newVeg.setGene(geneNum, r.nextLong());
+	      }
+	      }
+	    */
+	    
+	    //if(!restart) {
+	    // Set the child's genome to be mutated from an ancestor's genome
+	    if(curGenIndex > curGenSize / 2) {
+		curGenIndex = 0;
+	    }
+	    
+	    Creature ancestor = curGen.elementAt(curGenIndex);
+	    
+	    for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+		newVeg.setGene(geneNum, ancestor.getGene(geneNum));
+	    }
+	    
+	    
+	    //int numMutations = r.nextInt(Creature.MUTATION_RATE);
+	    
+	    for(int j = 0; j < Creature.MUTATION_RATE; j++) {
+		newVeg.mutate();
+	    }
+	    
+	    //}
+	    
+	    newVeg.setNumAncestors(genCount);
+	    
+	    controller.add(newVeg);
+	    
+	    if(curGenIndex > curGenSize / 2) {
+		curGenIndex = 0;
+	    }
+	    
+	    
+	    curGenIndex++;
+	}
+	
+	this.curGen = new Vector<Creature>();
+	
+	
+	// Generate FOOD_START_COUNT random Food sources within reasonable bounds
+	for(int i = 0; i < FOOD_START_COUNT; i++) {
+	    controller.add(new Food(xFoodRange(), // x coordinate
+				    yFoodRange(), // y coordinate
+				    r.nextInt(MAX_FOOD_AMOUNT))); // size
+	}
     }
+    
+    
+    /**
+     * Draw all GameObjects that are currently alive and not consumed
+     */
+    public void paint(Graphics g) {
+	
+	/********************* Draw background **********************/
+	
+	
+	g.setColor(Color.LIGHT_GRAY);
+	g.fillRect(0, 0, enviWidth, enviHeight);
+	
+	
+	
+	
+	/********** Draw GameObjects in front of background *********/
+	
+	if(GRAPHICS) {
+	    controller.draw(g);
+	}
+	
+	
+	/*********** Draw additional components *********************/
+	
+	
+	g.setColor(Color.BLACK);
+	
+	jsp.getVerticalScrollBar().setEnabled(false);
+	
+	txt.setFont(new Font("Monospaced", 1, 12));
+	txt.setText(consoleSB.toString());
+	txt.setEditable(true);
+	
+	jsp.setLocation(0, enviHeight);
+	jsp.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT - 1);
+	jsp.getVerticalScrollBar().setEnabled(true);
 
+	g.setFont(new Font("Times", 1, 12));
+	String mpf = "Moves per Frame";
+	FontMetrics fm = g.getFontMetrics();
+	int fontHeight = fm.getHeight();
+	
+	
+	mpfSlider.setLocation(enviWidth + SLIDER_X_OFFSET, SLIDER_Y_OFFSET);
+	mpfSlider.setSize(SLIDER_WIDTH, SLIDER_HEIGHT);
+	
+	mpfSlider.repaint();
+	
+	g.setColor(Color.WHITE);
+	g.fillRect((int)mpfSlider.getX(), (int)mpfSlider.getY() - 5 - fontHeight,
+		   mpfSlider.getWidth(), fontHeight);
+	
+	g.setColor(Color.BLACK);
+	g.drawString(mpf + ": " + mpfSlider.getValue(),
+		     (int)mpfSlider.getX(),
+		     (int)mpfSlider.getY() - 5);
+	
+	
+	g.setColor(Color.WHITE);
+	g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40 - fontHeight,
+		   SLIDER_WIDTH, fontHeight);
+	
+	g.setColor(Color.BLACK);
+	g.drawString("Max food points hits: " + Creature.divideCount,
+		     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40);
+	
+	
+	g.setColor(Color.WHITE);
+	g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60 - fontHeight,
+		   SLIDER_WIDTH, fontHeight);
+	
+	g.setColor(Color.BLACK);
+	g.drawString("Generation Number: " + mostAncestors,
+		     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60);
+	
+	g.setColor(Color.WHITE);
+	g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 80 - fontHeight,
+		   SLIDER_WIDTH, fontHeight);
+	
+	g.setColor(Color.BLACK);
+	g.drawString("Number of Prey: " + herbCount,
+		     enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 80);
+	
+	
+	/****************** Draw Borders ***************************/
+	
+	
+	g.drawRect(enviWidth, 0, MENU_WIDTH, MENU_HEIGHT);
+	g.drawRect(0, enviHeight, CONSOLE_WIDTH, CONSOLE_HEIGHT);
 
-    /*********** Draw additional components *********************/
-
-
-    g.setColor(Color.BLACK);
-
-    jsp.getVerticalScrollBar().setEnabled(false);
-
-    txt.setFont(new Font("Monospaced", 1, 12));
-    txt.setText(consoleSB.toString());
-    txt.setEditable(true);
-
-    jsp.setLocation(0, enviHeight);
-    jsp.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT - 1);
-    jsp.getVerticalScrollBar().setEnabled(true);
-
-    g.setFont(new Font("Times", 1, 12));
-    String mpf = "Moves per Frame";
-    FontMetrics fm = g.getFontMetrics();
-    int fontHeight = fm.getHeight();
-
-
-    mpfSlider.setLocation(enviWidth + SLIDER_X_OFFSET, SLIDER_Y_OFFSET);
-    mpfSlider.setSize(SLIDER_WIDTH, SLIDER_HEIGHT);
-
-    mpfSlider.repaint();
-
-    g.setColor(Color.WHITE);
-    g.fillRect((int)mpfSlider.getX(), (int)mpfSlider.getY() - 5 - fontHeight,
-    mpfSlider.getWidth(), fontHeight);
-
-    g.setColor(Color.BLACK);
-    g.drawString(mpf + ": " + mpfSlider.getValue(),
-    (int)mpfSlider.getX(),
-    (int)mpfSlider.getY() - 5);
-
-
-    g.setColor(Color.WHITE);
-    g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40 - fontHeight,
-    SLIDER_WIDTH, fontHeight);
-
-    g.setColor(Color.BLACK);
-    g.drawString("Max food points hits: " + Creature.divideCount,
-    enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 40);
-
-
-    g.setColor(Color.WHITE);
-    g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60 - fontHeight,
-    SLIDER_WIDTH, fontHeight);
-
-    g.setColor(Color.BLACK);
-    g.drawString("Generation Number: " + mostAncestors,
-    enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 60);
-
-    g.setColor(Color.WHITE);
-    g.fillRect(enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 80 - fontHeight,
-    SLIDER_WIDTH, fontHeight);
-
-    g.setColor(Color.BLACK);
-    g.drawString("Number of Prey: " + herbCount,
-    enviWidth + SLIDER_X_OFFSET, MENU_HEIGHT - 80);
-
-
-    /****************** Draw Borders ***************************/
-
-
-    g.drawRect(enviWidth, 0, MENU_WIDTH, MENU_HEIGHT);
-    g.drawRect(0, enviHeight, CONSOLE_WIDTH, CONSOLE_HEIGHT);
-
-
-
-}
-
-
-// App should stop running
-public void stop() {
-    running = false;
-}
-
-
-// Returns the controller object containing all of the GameObjects
-// currently alive and not consumed
-public Controller getController() {
-    return this.controller;
-}
+	
+	
+    }
+    
+    
+    // App should stop running
+    public void stop() {
+	running = false;
+    }
+    
+    
+    // Returns the controller object containing all of the GameObjects
+    // currently alive and not consumed
+    public Controller getController() {
+	return this.controller;
+    }
 }
