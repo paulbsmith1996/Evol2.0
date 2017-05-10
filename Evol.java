@@ -40,7 +40,7 @@ public class Evol extends JApplet implements Runnable {
     //======================
 
     // Flag that gets updated during `start` and `stop`.
-    private boolean running;
+    private boolean running = false;
 
     // A thread used to render the correct number of frames per second.
     private Thread ticker;
@@ -77,11 +77,11 @@ public class Evol extends JApplet implements Runnable {
     // A counter to keep track of the moves in the current frame.
     private int moveCount = 0;
 
-    // The most developed creature currently in the simulation.
-    private Creature mostDevelopedCreature;
-
     // The number of ancestors for the most-developed creature.
     private int mostAncestors = 0;
+
+    // The most developed creature currently in the simulation.
+    private Creature mostDevelopedCreature;
 
     // Whether or not applet graphics are toggled on.
     private boolean graphics = true;
@@ -90,10 +90,10 @@ public class Evol extends JApplet implements Runnable {
     private KeyHandler keyHandler;
 
     // A string buffer for writing strings to the applet's console.
-    private StringBuffer consoleBuffer = new StringBuffer();
+    private StringBuffer consoleBuffer;
 
     // The text printed in the applet's console.
-    private JTextPane consoleText = new JTextPane();
+    private JTextPane consoleText;
 
     // The scrollable console pane at the bottom of the applet.
     private JScrollPane console;
@@ -183,6 +183,11 @@ public class Evol extends JApplet implements Runnable {
 	return enviHeight / 2;
     }
 
+    // Generates a size for a new food source.
+    public int nextFoodSize() {
+	return rand.nextInt(MAX_FOOD_SIZE)));
+    }
+
     // Randomly generates a Creature x-coordinate.
     public int nextCreatureXPos() {
 	return rand.nextInt(enviWidth - 4 * enviOffset) + 2 * enviOffset;
@@ -196,7 +201,7 @@ public class Evol extends JApplet implements Runnable {
 
     // Randomly generates an orientation for a creature to spawn with.
     public double nextCreatureAngle() {
-	//return rand.nextInt(4) * Math.PI / 2; 
+	// return rand.nextInt(4) * Math.PI / 2; 
 	return 0;
     }
 
@@ -210,18 +215,20 @@ public class Evol extends JApplet implements Runnable {
         Frame title = (Frame) this.getParent().getParent();
         title.setTitle("EVOL: A Simulator of Darwinian Evolution");
 
+	// Initialize a string buffer for writing strings to the applet's console.
+	consoleBuffer = new StringBuffer();
+	
 	// Initializes the key handler and sets the applet to response to 
 	// our keystrokes.
         keyHandler = new KeyHandler();
         this.addKeyListener(keyHandler);
 
-	// Set the console text to be editable.
+	// Initialize a pane for the text printed in the applet's console.
+	consoleText = new JTextPane();
 	//
 	// THIS DOESN'T WORK ???
 	//
         consoleText.setEditable(true);
-
-	// Set the location of console to start below the simulation environment.
         consoleText.setLocation(0, enviHeight);
         consoleText.setSize(consoleWidth, consoleHeight);
 
@@ -251,7 +258,7 @@ public class Evol extends JApplet implements Runnable {
         for (int i = 0; i < FOOD_START_COUNT; i++) {
             controller.add(new Food(nextFoodXPos(),
 				    nextFoodYPos(),
-				    rand.nextInt(MAX_FOOD_SIZE))); // size
+				    nextFoodSize()));
         }
 
         // Generate PREY_START_COUNT random Creatures within reasonable bounds.
@@ -416,7 +423,7 @@ public class Evol extends JApplet implements Runnable {
                 if (foodCount < MAX_FOOD_COUNT && rand.nextInt(1000) < FOOD_GEN_RATE) {
                     controller.add(new Food(nextFoodXPos(),
 					    nextFoodYPos(),
-					    rand.nextInt(MAX_FOOD_SIZE))); // size
+					    nextFoodSize()));
                 }
 
                 // Repopulate the game with more predators if they all die out.
@@ -648,9 +655,9 @@ public class Evol extends JApplet implements Runnable {
 	
 	// Generate FOOD_START_COUNT random Food sources within reasonable bounds.
 	for (int i = 0; i < FOOD_START_COUNT; i++) {
-	    controller.add(new Food(nextFoodXPos(), // x coordinate
-				    nextFoodYPos(), // y coordinate
-				    rand.nextInt(MAX_FOOD_SIZE))); // size
+	    controller.add(new Food(nextFoodXPos(),
+				    nextFoodYPos(),
+				    nextFoodSize()));
 	}
 	
     }
