@@ -550,32 +550,31 @@ public class Evol extends JApplet implements Runnable {
     public void createNewGeneration() {
 
 	/*
-	  for(Creature c: curGen) {
+	  for (Creature c: currentGenDead) {
 	  System.out.print(c.getAmountEaten() + " ");
 	  }
-	  
 	  System.out.println("\n");
 	*/
-	
+
+	// Increment the generation count.
 	genCount++;
-	
+
+	// Remove all food from the environment so it can be re-spawned.
 	controller.removeFood();
 	
 	// Important to compute this outside of for loop. We only want the
-	// ancestors to have their genomes passed on, not the current generation's
+	// ancestors to have their genomes passed on, not the current generation's.
 	int currentGenDeadSize = currentGenDead.size();
 	
 	int currentGenDeadIndex = 0;
 	
-	//boolean restart = true;
+	// boolean restart = true;
 	
 	/*
-	  for(Creature creature: currentGenDead) {
-	  
-	  if(creature.getAmountEaten() != 0) {
+	  for (Creature creature: currentGenDead) {
+	  if (creature.getAmountEaten() != 0) {
 	  restart = false;
 	  }
-	  
 	  }
 	*/
 	
@@ -584,111 +583,105 @@ public class Evol extends JApplet implements Runnable {
 	  consoleBuffer.append("No creature ate food. \n");
 	  }
 	*/
-	
-	for(int i = 0; i < PREY_START_COUNT; i++) {
-	    Creature newVeg = new Creature(nextCreatureXPos(), 
-					   nextCreatureYPos(), 
-					   nextCreatureAngle(), 0, this);
-	    
+
+	// Regenerate prey in the environment.
+	for (int i = 0; i < PREY_START_COUNT; i++) {
+	    Creature newPrey = new Creature(nextCreatureXPos(), 
+					    nextCreatureYPos(), 
+					    nextCreatureAngle(), 0, this);
 	    
 	    /*
-	      if(restart) {
-	      for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-	      newVeg.setGene(geneNum, r.nextLong());
+	      if (restart) {
+	      for (int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+	      newPrey.setGene(geneNum, r.nextLong());
 	      }
 	      }
 	    */
 	    
-	    //if(!restart) {
-	    // Set the child's genome to be mutated from an ancestor's genome
-	    if(currentGenDeadIndex > currentGenDeadSize / 2) {
+	    // Set the child's genome to be mutated from an ancestor's genome.
+	    if (currentGenDeadIndex > currentGenDeadSize / 2) {
 		currentGenDeadIndex = 0;
 	    }
 	    
 	    Creature ancestor = currentGenDead.elementAt(currentGenDeadIndex);
 	    
-	    for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-		newVeg.setGene(geneNum, ancestor.getGene(geneNum));
+	    for (int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+		newPrey.setGene(geneNum, ancestor.getGene(geneNum));
 	    }
 	    
 	    
 	    //int numMutations = rand.nextInt(Creature.MUTATION_RATE);
 	    
-	    for(int j = 0; j < Creature.MUTATION_RATE; j++) {
-		newVeg.mutate();
+	    for (int j = 0; j < Creature.MUTATION_RATE; j++) {
+		newPrey.mutate();
 	    }
 	    
 	    //}
 	    
-	    newVeg.setNumAncestors(genCount);
+	    newPrey.setNumAncestors(genCount);
 	    
-	    controller.add(newVeg);
+	    controller.add(newPrey);
 	    
-	    if(currentGenDeadIndex > currentGenDeadSize / 2) {
+	    if (currentGenDeadIndex > currentGenDeadSize / 2) {
 		currentGenDeadIndex = 0;
 	    }
-	    
-	    
+	    	    
 	    currentGenDeadIndex++;
+	    
 	}
-	
+
+	// Reset/clear the current generation's dead creatures.
 	this.currentGenDead = new Vector<Creature>();
 	
-	
-	// Generate FOOD_START_COUNT random Food sources within reasonable bounds
-	for(int i = 0; i < FOOD_START_COUNT; i++) {
+	// Generate FOOD_START_COUNT random Food sources within reasonable bounds.
+	for (int i = 0; i < FOOD_START_COUNT; i++) {
 	    controller.add(new Food(nextFoodXPos(), // x coordinate
 				    nextFoodYPos(), // y coordinate
 				    rand.nextInt(MAX_FOOD_SIZE))); // size
 	}
+	
     }
     
-    
-    /**
-     * Draw all GameObjects that are currently alive and not consumed
-     */
+    // Draws applet GUI.
     public void paint(Graphics g) {
 	
-	/********************* Draw background **********************/
-	
+	//=================
+	// DRAW BACKGROUND
+	//=================
 	
 	g.setColor(Color.LIGHT_GRAY);
 	g.fillRect(0, 0, enviWidth, enviHeight);
+
+	//===================
+	// DRAW GAME OBJECTS
+	//===================
 	
-	
-	
-	
-	/********** Draw GameObjects in front of background *********/
-	
-	if (graphics) {
-	    controller.draw(g);
-	}
-	
-	
-	/*********** Draw additional components *********************/
-	
+	if (graphics) controller.draw(g);
+
+	//==============
+	// DRAW CONSOLE
+	//==============
 	
 	g.setColor(Color.BLACK);
-	
 	console.getVerticalScrollBar().setEnabled(false);
-	
 	consoleText.setFont(new Font("Monospaced", 1, 12));
 	consoleText.setText(consoleBuffer.toString());
 	consoleText.setEditable(true);
-	
 	console.setLocation(0, enviHeight);
 	console.setSize(consoleWidth, consoleHeight - 1);
 	console.getVerticalScrollBar().setEnabled(true);
 
+	//=======================================
+	// DRAW MOVES-PER-FRAME SLIDER AND LABEL
+	//=======================================
+	
 	g.setFont(new Font("Times", 1, 12));
 	String mpf = "Moves per Frame";
 	FontMetrics fm = g.getFontMetrics();
 	int fontHeight = fm.getHeight();
 	
-	
 	mpfSlider.setLocation(enviWidth + sliderXOffset, sliderYOffset);
 	mpfSlider.setSize(sliderWidth, sliderHeight);
-	
 	mpfSlider.repaint();
 	
 	g.setColor(Color.WHITE);
@@ -699,7 +692,10 @@ public class Evol extends JApplet implements Runnable {
 	g.drawString(mpf + ": " + mpfSlider.getValue(),
 		     (int)mpfSlider.getX(),
 		     (int)mpfSlider.getY() - 5);
-	
+
+	//============================
+	// DRAW SIMULATION STATISTICS
+	//============================
 	
 	g.setColor(Color.WHITE);
 	g.fillRect(enviWidth + sliderXOffset, menuHeight - 40 - fontHeight,
@@ -708,7 +704,6 @@ public class Evol extends JApplet implements Runnable {
 	g.setColor(Color.BLACK);
 	g.drawString("Max food points hits: " + Creature.divideCount,
 		     enviWidth + sliderXOffset, menuHeight - 40);
-	
 	
 	g.setColor(Color.WHITE);
 	g.fillRect(enviWidth + sliderXOffset, menuHeight - 60 - fontHeight,
@@ -726,26 +721,22 @@ public class Evol extends JApplet implements Runnable {
 	g.drawString("Number of Prey: " + numLivingPrey,
 		     enviWidth + sliderXOffset, menuHeight - 80);
 	
-	
-	/****************** Draw Borders ***************************/
-	
+	//==============
+	// DRAW BORDERS
+	//==============
 	
 	g.drawRect(enviWidth, 0, menuWidth, menuHeight);
 	g.drawRect(0, enviHeight, consoleWidth, consoleHeight);
-
-	
 	
     }
     
-    
-    // App should stop running
+    // Stops the applet.
     public void stop() {
 	running = false;
     }
     
-    
     // Returns the controller object containing all of the GameObjects
-    // currently alive and not consumed
+    // currently alive and not consumed.
     public Controller getController() {
 	return this.controller;
     }
