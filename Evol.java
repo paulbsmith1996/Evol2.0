@@ -4,16 +4,29 @@
 </html>
 */
 
-import javax.swing.*;
-import java.awt.*;
-import java.io.*;
+/*
+ * The main applet driver.
+ */
+
+import javax.swing.JApplet;
+import javax.swing.JTextPane;
+import javax.swing.JSlider;
+import javax.swing.JScrollPane;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Frame;
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.util.Vector;
 
 
 public class Evol extends JApplet implements Runnable {
 
+    
     //========================
     // IMMUTABLE APPLET STATE
     //========================

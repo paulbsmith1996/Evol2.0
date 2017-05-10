@@ -1,3 +1,7 @@
+/*
+ * A superclass for all objects that interact in the simulator.
+ */
+
 import java.awt.Graphics;
 
 public class GameObject {
@@ -15,25 +19,13 @@ public class GameObject {
         this.y = y;
     }
 
-    // Gets the object's x-coordinate.
-    public int getX() {
-        return x;
-    }
+    // Getter and setter for object's x-coordinate.
+    public int getX() { return x; }
+    public void setX(int x) { this.x = x; }
 
-    // Sets the object's x-coordinate.
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    // Gets the object's y-coordinate.
-    public int getY() {
-        return y;
-    }
-
-    // Sets the object's y-coordinate.
-    public void setY(int y) {
-        this.y = y;
-    }
+    // Getter and setter for object's y-coordinate.
+    public int getY() { return y; }
+    public void setY(int y) { this.y = y; }
 
     // A default draw method, to be overridden.
     public void draw(Graphics g) {
