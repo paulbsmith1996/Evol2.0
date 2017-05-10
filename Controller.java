@@ -42,10 +42,10 @@ public class Controller extends Vector<GameObject> {
                 Creature toDie = (Creature) obj;
                 int creatNumAncestors = toDie.getNumAncestors();
                 int amountEaten = toDie.getAmountEaten();
-                if (creatNumAncestors >= Evol.genScores.size()) {
-                    Evol.genScores.add(new Vector<Integer>());
+                if (creatNumAncestors >= Evol.generationScores.size()) {
+                    Evol.generationScores.add(new Vector<Integer>());
                 }
-                Vector<Integer> creatureGen = Evol.genScores.elementAt(creatNumAncestors);
+                Vector<Integer> creatureGen = Evol.generationScores.elementAt(creatNumAncestors);
                 int creatureGenSize = creatureGen.size();
                 int index = 0;
 
@@ -56,7 +56,7 @@ public class Controller extends Vector<GameObject> {
                 }
 
                 creatureGen.insertElementAt(amountEaten, index);
-                Evol.curGen.insertElementAt(toDie, index);
+                Evol.currentGenDead.insertElementAt(toDie, index);
 
                 if(!toDie.divided()) {
 
