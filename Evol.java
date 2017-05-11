@@ -116,7 +116,7 @@ public class Evol extends JApplet implements Runnable {
     private final int PRED_START_COUNT = 3;
 
     // Maximum number of food sources that can occur in the environment.
-    private final int MAX_FOOD_COUNT = 4000;
+    private final int MAX_FOOD_COUNT = 250;
 
     // Maximum amount of food that can spawn from any food source.
     private final int MAX_FOOD_SIZE = 10000;
@@ -162,6 +162,8 @@ public class Evol extends JApplet implements Runnable {
     // IMPLEMENTATION
     //================
 
+    public MersenneTwister getRand() { return this.rand; }
+
     // Getter and setter for environment width.
     public void setEnviWidth(int width) { this.enviWidth = width; }
     public int getEnviWidth() { return this.enviWidth; }
@@ -176,16 +178,16 @@ public class Evol extends JApplet implements Runnable {
     // Denerates an x-coordinate for a new food source.
     public int nextFoodXPos() {
 	//return rand.nextInt(enviWidth - 6 * enviOffset) + 3 * enviOffset; 
-	//return enviWidth / 2;
-	return rand.nextInt(enviWidth - enviOffset);
+	return enviWidth / 2;
+	//return rand.nextInt(enviWidth - enviOffset);
 	//return rand.nextInt(enviWidth - 6 * enviOffset) + 3 * enviOffset;
     }
 
     // Generates a y-coordinate for a new food source.
     public int nextFoodYPos() {
-	//return enviHeight / 2; 
-	return rand.nextInt(enviHeight - enviOffset);
-	//return enviHeight / 2;
+	//return 2 * enviHeight / 3; 
+	//return rand.nextInt(enviHeight - enviOffset);
+	return 2 * enviHeight / 3;
     }
 
     // Generates a size for a new food source.
@@ -196,16 +198,17 @@ public class Evol extends JApplet implements Runnable {
     // Randomly generates a Creature x-coordinate.
     public int nextCreatureXPos() {
 	//return rand.nextInt(enviWidth - 4 * enviOffset) + 2 * enviOffset; 
-	return rand.nextInt(enviWidth - enviOffset);
-	//return enviWidth / 2;
-	//return rand.nextInt(enviWidth - 4 * enviOffset) + 2 * enviOffset;
+	//return rand.nextInt(enviWidth - enviOffset);
+	return enviWidth / 2;
+	//return rand.nextInt(enviWidth - 6 * enviOffset) + 3 * enviOffset;
 	// return rand.nextInt(enviHeight - enviOffset);
     }
 
     // Generates a Creature y-coordinate.
     public int nextCreatureYPos() {
-	//return 75; 
-	return rand.nextInt(enviHeight - enviOffset);
+	//return 50 + rand.nextInt(100); 
+	//return rand.nextInt(enviHeight - enviOffset);
+	return enviHeight / 3;
     }
 
     // Randomly generates an orientation for a creature to spawn with.
@@ -427,6 +430,7 @@ public class Evol extends JApplet implements Runnable {
                 // Controller removes all dead creatures and consumed food sources.
                 controller.testObjects();
 
+		/*
                 // Generate food according to if there is enough space for it 
 		// (foodCount < MAX_FOOD_COUNT) and according to how quickly it should 
 		// be generated. On each frame, there is a (FOOD_GEN_RATE / 1000) probability 
@@ -437,6 +441,7 @@ public class Evol extends JApplet implements Runnable {
 					    nextFoodSize()));
 
                 }
+		*/
 
 
                 // Repopulate the game with more predators if they all die out.
@@ -488,8 +493,8 @@ public class Evol extends JApplet implements Runnable {
 		keyHandler.setPrintTimes(false);
 
 		// Add the divide count to the console buffer.
-		consoleBuffer.append(Creature.divideCount + " divisions have occured\n");
-		consoleBuffer.append("Division times for each generation:\n\n");
+		//consoleBuffer.append(Creature.divideCount + " divisions have occured\n");
+		//consoleBuffer.append("Division times for each generation:\n\n");
 		
 		// Add the generation division times to the console buffer.
 		int gdtSize = generationDivisionTimes.size();
@@ -497,18 +502,27 @@ public class Evol extends JApplet implements Runnable {
 		    Vector<Integer> generationScore = generationScores.elementAt(i);
 		    if (generationScore.size() > 30) {
 			// consoleBuffer.append(i + ": ");
+			
 			/*
 			  int sum = 0;
 			  for (int score: generationScore) {
-			  //consoleBuffer.append(l + ", ");
-			  //if(l < 100000) {
-			  //sum += l;
-			  sum += score;
-			  //}
+			      //consoleBuffer.append(l + ", ");
+			      //if(l < 100000) {
+			      //sum += l;
+			      sum += score;
+			      //}
 			  }
+
 			  consoleBuffer.append((double) sum / (double) generationScore.size());
 			*/
+			
+			consoleBuffer.append("Generation " + i);
+			consoleBuffer.append(",  Best Creature: ");
+			consoleBuffer.append(generationScore.elementAt(0));
+			consoleBuffer.append(",  Median Creature: ");
 			consoleBuffer.append(generationScore.elementAt(generationScore.size() / 2));
+			//consoleBuffer.append("\n\n");
+
 			if (generationScore.size() != PREY_START_COUNT) {
 			    consoleBuffer.append(" num creatures: " + generationScore.size());
 			}
@@ -618,7 +632,8 @@ public class Evol extends JApplet implements Runnable {
 	  }
 	*/
 	
-	double eliteProportion = 0.25;
+	//double eliteProportion = 0.10;
+	double eliteProportion = 0.5 - (1 / (2 * genCount + 3));
 	
 	// Repopulate creatures
 	for (int i = 0; i < PREY_START_COUNT * eliteProportion; i++) {
@@ -641,15 +656,39 @@ public class Evol extends JApplet implements Runnable {
 		
 		
 		//int numMutations = rand.nextInt(Creature.MUTATION_RATE);
-		
+	       
 		for (int k = 0; k < Creature.MUTATION_RATE; k++) {
 		    newPrey.mutate();
 		}
+
+		if(rand.nextInt(1000) > 836) {
+		    newPrey.transpose(rand.nextInt(Creature.NUM_GENES), "A");
+		}
+
+		/*
+		boolean changed = false;
+
+		for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+		    if(newPrey.getGene(geneNum) != ancestor.getGene(geneNum)) {
+			changed = true;
+		    }
+		}
+
+		if(!changed) {
+		    System.out.println("Child " + j + " is identical to parent");
+		} else {
+		    System.out.println("New Genome! For Child " + j);
+		    System.out.println("Original genome: " + ancestor.getGenome());
+		    System.out.println("Child genome: " + newPrey.getGenome());
+		}
+		*/
+		
 
 		newPrey.setNumAncestors(genCount);
 		
 		controller.add(newPrey);
 	    }
+	    
 	    
 	    // Make new creature that will have same genome as the ancestor
 	    Creature ancestorCopy = new Creature(nextCreatureXPos(), 
@@ -665,13 +704,14 @@ public class Evol extends JApplet implements Runnable {
 	    
 	    controller.add(ancestorCopy);	    
 	    
+	    
 	}
 
 	// Reset/clear the current generation's dead creatures.
 	this.currentGenDead = new Vector<Creature>();
 	
 	// Generate FOOD_START_COUNT random Food sources within reasonable bounds.
-	for (int i = 0; i < FOOD_START_COUNT; i++) {
+	for (int i = 0; i < FOOD_START_COUNT * Math.sqrt(genCount); i++) {
 	    controller.add(new Food(nextFoodXPos(),
 				    nextFoodYPos(),
 				    nextFoodSize()));

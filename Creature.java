@@ -37,11 +37,11 @@ public class Creature extends GameObject {
     private final int START_EAT_SPEED = 100;
     private final int DEFAULT_FP = 3000;
     // default is 20
-    private final int DEFAULT_STARVING_RATE = 10;
+    private final int DEFAULT_STARVING_RATE = 5;
     private final int VISION_DISTANCE = 100;
 
     // Default mutation rate is 10
-    protected static final int MUTATION_RATE = 6;
+    protected static final int MUTATION_RATE = 5;
 
     private int starvingRate = DEFAULT_STARVING_RATE;
     // usually just set to default
@@ -60,7 +60,7 @@ public class Creature extends GameObject {
     // the window that the creature is looking at
     private int[][] vision;
 
-    private long[] genes;
+    private int[] genes;
     protected static final int NUM_GENES = 3;
     private int stimuli = 0;
 
@@ -71,8 +71,8 @@ public class Creature extends GameObject {
     private final int STIM_FIGHT = 4;
     private final int ON_FOOD = 8;
 
-    // NUM_INSTRUCTIONS * INSTRUCTION_LENGTH <= 64
-    private final int NUM_INSTRUCTIONS = 32;
+    // NUM_INSTRUCTIONS * INSTRUCTION_LENGTH <= 32
+    private final int NUM_INSTRUCTIONS = 16;
     private final int INSTRUCTION_LENGTH = 2;
 
     private int fleeing;
@@ -100,7 +100,7 @@ public class Creature extends GameObject {
     public Creature(int x, int y, double rot, int species, Evol game) {
         super(x, y);
 
-        rand = new MersenneTwister();
+        rand = game.getRand();
 
         this.game = game;
 
@@ -114,7 +114,7 @@ public class Creature extends GameObject {
         this.numAncestors = 0;
 
         this.species = species;
-        this.genes = new long[NUM_GENES];
+        this.genes = new int[NUM_GENES];
 
         this.vision = new int[2][2];
 
@@ -133,8 +133,7 @@ public class Creature extends GameObject {
 
         // Set random behavior for genes
         for(int i = 0; i < genes.length; i++) {
-            genes[i] = rand.nextLong();
-
+            genes[i] = rand.nextInt();
         }
 
         this.fleeing = 0;
@@ -169,8 +168,8 @@ public class Creature extends GameObject {
     public void setAmountEaten(int ae) { this.amountEaten = ae; }
     public int getAmountEaten() { return this.amountEaten; }
 
-    public void setGene(int geneNum, long gene) { genes[geneNum] = gene; }
-    public long getGene(int geneNum) { return this.genes[geneNum]; }
+    public void setGene(int geneNum, int gene) { genes[geneNum] = gene; }
+    public int getGene(int geneNum) { return this.genes[geneNum]; }
 
     public void setStimFood() { this.stimuli |= STIM_FOOD; }
     public boolean getStimFood() { return (this.stimuli& STIM_FOOD) != 0; }
@@ -580,9 +579,12 @@ public class Creature extends GameObject {
     public void mutate() {
 
         // Mutate an instruction randomly
-        int mutIndex = rand.nextInt(4) << rand.nextInt(64);
+        int mutIndex = (1 + rand.nextInt(3)) << rand.nextInt(32);
+	//System.out.println("MI: " + Integer.toBinaryString(mutIndex));
+
 
         int geneNum = rand.nextInt(NUM_GENES);
+	//System.out.println("GN: " + geneNum);
 
         // Toggles the bit at the mutIndex index
         setGene(geneNum, genes[geneNum] ^= mutIndex);
@@ -590,7 +592,7 @@ public class Creature extends GameObject {
 
     public int transpose(int geneNum, String transposonAlpha) {
 
-	long gene = genes[geneNum];
+	int gene = genes[geneNum];
 
 	char[] transposonLetterArr = transposonAlpha.toCharArray();
 
@@ -624,9 +626,9 @@ public class Creature extends GameObject {
 	}
 
 	// Get the binary representation of the gene
-	String geneStr = Long.toBinaryString(gene);
+	String geneStr = Integer.toBinaryString(gene);
 
-	while(geneStr.length() < 64) {
+	while(geneStr.length() < 32) {
 	    geneStr = "0" + geneStr;
 	}
 
@@ -704,7 +706,7 @@ public class Creature extends GameObject {
 
 	    //System.out.println("Transposed Gene: " + geneStr);
 	    
-	    setGene(geneNum, new BigInteger(geneStr, 2).longValue());
+	    setGene(geneNum, new BigInteger(geneStr, 2).intValue());
 
 	    return 0;
 	} else {
@@ -767,15 +769,15 @@ public class Creature extends GameObject {
         return count;
     }
 
-    public String toInst(long gene, int numInst) {
+    public String toInst(int gene, int numInst) {
 
         String result = "";
 
         for(int i = 0; i < numInst; i++) {
             //int pos = i * INSTRUCTION_LENGTH;
 
-            long toConvertL = gene >> (i * INSTRUCTION_LENGTH) & 3;
-	    int toConvert = (int)toConvertL;
+            int toConvert = gene >> (i * INSTRUCTION_LENGTH) & 3;
+	    //int toConvert = (int)toConvertL;
 
             String inst = INSTRUCTIONS[toConvert];
 
