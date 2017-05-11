@@ -121,6 +121,25 @@ public class Controller extends Vector<GameObject> {
 
     }
 
+    public void removePreds() {
+
+        boolean modified = false;
+
+	for (int i = 0; i < size(); i++) {
+	    GameObject obj = elementAt(i);
+            if (obj instanceof Creature) {
+		if(((Creature)obj).getSpecies() == 1) {
+		    remove(obj);
+		    modified = true;
+		    break;
+		}
+            }
+        }
+
+        if (modified) removePreds();
+
+    }
+
     // Helpful method that prints out the current number of Creatures that are alive.
     public void printCreatureNum() {
         int count = 0;

@@ -113,7 +113,7 @@ public class Evol extends JApplet implements Runnable {
     private final int PREY_START_COUNT = 60;
 
     // Initial predator count.
-    private final int PRED_START_COUNT = 3;
+    private final int PRED_START_COUNT = 1;
 
     // Maximum number of food sources that can occur in the environment.
     private final int MAX_FOOD_COUNT = 250;
@@ -153,7 +153,7 @@ public class Evol extends JApplet implements Runnable {
     private int numLivingPrey;
 
     // Whether or not predators are spawned in the environment.
-    private boolean predators = false;
+    private boolean predators = true;
 
     // The number of generations that have occurred.
     private int genCount = 0;
@@ -178,9 +178,10 @@ public class Evol extends JApplet implements Runnable {
     // Denerates an x-coordinate for a new food source.
     public int nextFoodXPos() {
 	//return rand.nextInt(enviWidth - 6 * enviOffset) + 3 * enviOffset; 
-	return enviWidth / 2;
+	//return enviWidth / 2 - 20 + rand.nextInt(40);
 	//return rand.nextInt(enviWidth - enviOffset);
 	//return rand.nextInt(enviWidth - 6 * enviOffset) + 3 * enviOffset;
+	return enviWidth / 2;
     }
 
     // Generates a y-coordinate for a new food source.
@@ -215,6 +216,14 @@ public class Evol extends JApplet implements Runnable {
     public double nextCreatureAngle() {
 	// return rand.nextInt(4) * Math.PI / 2; 
 	return 0;
+    }
+
+    public int nextPredXPos() {
+	return enviWidth / 2;
+    }
+
+    public int nextPredYPos() {
+	return enviHeight / 2;
     }
 
     // Applet initialization.
@@ -289,8 +298,8 @@ public class Evol extends JApplet implements Runnable {
         // Generate PRED_START_COUNT random predator creatures within reasonable bounds.
         if (predators) {
             for (int i = 0; i < PRED_START_COUNT; i++) {
-                Creature newPred = new Creature(rand.nextInt(enviWidth - enviOffset),
-						rand.nextInt(enviHeight - enviOffset),
+                Creature newPred = new Creature(nextPredXPos(),
+						nextPredYPos(),
 						0, 1, this);
                 controller.add(newPred);
             }
@@ -362,6 +371,7 @@ public class Evol extends JApplet implements Runnable {
 			// whether the creature is a predator or a prey.
                         if (creature.getSpecies() == 1) {
                             predCount++;
+			    creature.setColor(Color.RED);
                         } else {
                             preyCount++;
                             creature.setColor(Color.BLUE);
@@ -444,6 +454,7 @@ public class Evol extends JApplet implements Runnable {
 		*/
 
 
+		/*
                 // Repopulate the game with more predators if they all die out.
                 if (predCount < 1 && rand.nextInt(10) < 4 && predators) {
 
@@ -465,6 +476,7 @@ public class Evol extends JApplet implements Runnable {
                         }
                     }
                 }
+		*/
 
 		
 		// If all prey has died, create a new generation.
@@ -609,6 +621,23 @@ public class Evol extends JApplet implements Runnable {
 
 	// Remove all food from the environment so it can be re-spawned.
 	controller.removeFood();
+	controller.removePreds();
+
+	// Generate FOOD_START_COUNT random Food sources within reasonable bounds.
+	for (int i = 0; i < FOOD_START_COUNT * Math.sqrt(genCount); i++) {
+	    controller.add(new Food(nextFoodXPos(),
+				    nextFoodYPos(),
+				    nextFoodSize()));
+	}
+
+
+	if(predators) {
+	    for(int predNum = 0; predNum < PRED_START_COUNT; predNum++) {
+		controller.add(new Creature(nextPredXPos(),
+					    nextPredYPos(),
+					    0, 1, this));
+	    }
+	}
 	
 	// Important to compute this outside of for loop. We only want the
 	// ancestors to have their genomes passed on, not the current generation's.
@@ -632,8 +661,8 @@ public class Evol extends JApplet implements Runnable {
 	  }
 	*/
 	
-	//double eliteProportion = 0.10;
-	double eliteProportion = 0.5 - (1 / (2 * genCount + 3));
+	double eliteProportion = 0.5;
+	//	double eliteProportion = 0.5 - (1 / (2 * genCount + 3));
 	
 	// Repopulate creatures
 	for (int i = 0; i < PREY_START_COUNT * eliteProportion; i++) {
@@ -710,13 +739,6 @@ public class Evol extends JApplet implements Runnable {
 	// Reset/clear the current generation's dead creatures.
 	this.currentGenDead = new Vector<Creature>();
 	
-	// Generate FOOD_START_COUNT random Food sources within reasonable bounds.
-	for (int i = 0; i < FOOD_START_COUNT * Math.sqrt(genCount); i++) {
-	    controller.add(new Food(nextFoodXPos(),
-				    nextFoodYPos(),
-				    nextFoodSize()));
-	}
-
 	newGenCreated = true;
 
     }

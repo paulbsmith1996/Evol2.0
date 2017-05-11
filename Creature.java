@@ -61,7 +61,7 @@ public class Creature extends GameObject {
     private int[][] vision;
 
     private int[] genes;
-    protected static final int NUM_GENES = 3;
+    protected static final int NUM_GENES = 4;
     private int stimuli = 0;
 
     private boolean stimulated;
@@ -486,25 +486,34 @@ public class Creature extends GameObject {
     public long move() {
         if (!dead) {
 
-            if (species < 2) {
+	    if(species == 1) {
+		checkStimulus();
+	    }
+
+            if (species < 1) {
                 foodPoints -= starvingRate;
                 //setSize(foodPoints);
 
                 // 32 bits in an int - 2 bits per instruction = 16 instructions max
-                if (getOnFood()) {
+		if(getStimFlee()) {
+		    
+		    // Spotted a predator
+		    execute(genes[0], instCount);
+
+                } else if (getOnFood()) {
 
                     // On a food source
-                    execute(genes[0], instCount);
+                    execute(genes[1], instCount);
 
                 } else if (getStimFood()) {
 
                     // Spotted food
-                    execute(genes[1], instCount);
+                    execute(genes[2], instCount);
 
                 } else {
 
                     // Unstimulated
-                    execute(genes[2], instCount);
+                    execute(genes[3], instCount);
 
                 }
 
@@ -717,18 +726,20 @@ public class Creature extends GameObject {
     }
 
     public void printGenome() {
-        System.out.print(divideCount + " divisions have occurred --- Species: " + species + "\n\n"
-        + "Gene 1 (On Food)     : " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 2 (See Food)    : " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 3 (Unstimulated): " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n"
+        System.out.print("Species: " + species + "\n\n"
+        + "Gene 1 (See Predator): " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n"
+        + "Gene 2 (On Food)     : " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
+        + "Gene 3 (See Food)    : " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n"
+        + "Gene 4 (Unstimulated): " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n"
         + "----------------------------------------------\n\n");
     }
 
     public String getGenome() {
-        return "\n\n"    + divideCount + " divisions have occurred --- Species: " + species + "\n\n"
-        + "Gene 1 (On Food)     : " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 2 (See Food)    : " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
-        + "Gene 3 (Unstimulated): " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n\n"
+        return "\n\nSpecies: " + species + "\n\n"
+        + "Gene 1 (See Predator): " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n"
+        + "Gene 2 (On Food)     : " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
+        + "Gene 3 (See Food)    : " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n"
+        + "Gene 4 (Unstimulated): " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n\n"
         + "----------------------------------------------";
 
     }
