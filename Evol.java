@@ -84,16 +84,18 @@ public class Evol extends JApplet implements Runnable {
 
     private int herbCount;
 
+    private boolean newGenCreated;
+    
 
     /************************************/
     // STARTING CONDITIONS
     /************************************/
 
-    private final int MAX_TIME_ALIVE = 5000;
+    private final int MAX_TIME_ALIVE = 10000;
 
-    private final int HERB_START_COUNT = 500;
+    private final int HERB_START_COUNT = 60;
     private final int PRED_START_COUNT = 3;
-    private final int MAX_FOOD         = 200;
+    private final int MAX_FOOD         = 4000;
     private final int MAX_FOOD_AMOUNT  = 10000;
     private final int FOOD_START_COUNT = MAX_FOOD;
     private final boolean PREDS_ON     = false;
@@ -113,29 +115,29 @@ public class Evol extends JApplet implements Runnable {
     public Rectangle getEnviBounds() { return new Rectangle(0, 0, enviWidth, enviHeight); }
 
     public int xFoodRange() { 
-	return r.nextInt(enviWidth - 6 * OFFSET) + 3 * OFFSET; 
+	//return r.nextInt(enviWidth - 6 * OFFSET) + 3 * OFFSET; 
 	//return enviWidth / 2;
-	//return r.nextInt(enviWidth - OFFSET);
+	return r.nextInt(enviWidth - OFFSET);
     }
     public int yFoodRange() { 
-	return enviHeight / 2; 
-	//return r.nextInt(enviHeight - OFFSET);
+	//return enviHeight / 2; 
+	return r.nextInt(enviHeight - OFFSET);
     }
 
     public int xCreatureRange() { 
-	return r.nextInt(enviWidth - 4 * OFFSET) + 2 * OFFSET; 
-	//return r.nextInt(enviWidth - OFFSET);
+	//return r.nextInt(enviWidth - 4 * OFFSET) + 2 * OFFSET; 
+	return r.nextInt(enviWidth - OFFSET);
 	//return enviWidth / 2;
     }
 
     public int yCreatureRange() { 
-	return 75; 
-	//return r.nextInt(enviHeight - OFFSET);
+	//return 75; 
+	return r.nextInt(enviHeight - OFFSET);
     }
 
     public double initAngle() { 
-	//return r.nextInt(4) * Math.PI; 
-	return 0;
+	return r.nextInt(4) * Math.PI; 
+	//return 0;
     }
 
     // Initialize Random object and Controller object
@@ -151,10 +153,7 @@ public class Evol extends JApplet implements Runnable {
         keyHandler = new KeyHandler();
         this.addKeyListener(keyHandler);
 
-        //txt.setText("This is the JSP");
-        //txt.setEditable(false);
         txt.setEditable(true);
-
         txt.setLocation(0, enviHeight);
         txt.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
 
@@ -177,6 +176,8 @@ public class Evol extends JApplet implements Runnable {
         moveCount = 0;
         mostAncestors = 0;
         firstCheck = true;
+
+	newGenCreated = false;
 
 
         // Generate FOOD_START_COUNT random Food sources within reasonable bounds
@@ -327,15 +328,21 @@ public class Evol extends JApplet implements Runnable {
                 // Controller removes all dead creatures and consumed food sources
                 controller.testObjects();
 
+
+
                 // Generate food according to if there is enough space for it (foodCount < MAX_FOOD)
                 // and according to how quickly it should be generated. On each frame, there is a
                 // (FOOD_GEN_RATE / 1000) probability of a new food source being randomly generated
-                // in the game                                         
+                // in the game           
+		/*                              
                 if(foodCount < MAX_FOOD && r.nextInt(1000) < FOOD_GEN_RATE) {
                     controller.add(new Food(xFoodRange(),
 					    yFoodRange(),
 					    r.nextInt(MAX_FOOD_AMOUNT)));
                 }
+		*/
+
+
 
 
                 // Repopulate the game with more predators if they all die out
@@ -366,143 +373,149 @@ public class Evol extends JApplet implements Runnable {
                 if(vegCount == 0) {
 		    createNewGeneration();
 		}
-            
-        }
-
-        if(mostDeveloped != null) {
-            mostDeveloped.setColor(Color.GREEN);
-        }
-
-        /*
-	  if(keyHandler.getPaused() && firstCheck && Creature.divideCount > 0) {
-            consoleSB.append("\n\nMost developed creature's genome: \n");
-            consoleSB.append(mostDeveloped.getGenome());
-            firstCheck = false;
-        }
-	*/
-
-	if(keyHandler.getPrintGenome()) {
-	    keyHandler.setPrintGenome(false);
+		
+	    }
 	    
 	    if(mostDeveloped != null) {
-		consoleSB.append(mostDeveloped.getGenome());
+		mostDeveloped.setColor(Color.GREEN);
 	    }
-	}
-	
-	// We either want to print something to the console or write it to a file
-	if(keyHandler.getPrintTimes() || keyHandler.getWriteToFile()) {
-	    keyHandler.setPrintTimes(false);
 	    
-	    consoleSB.append(Creature.divideCount + " divisions have occured\n");
-	    consoleSB.append("Division times for each generation:\n\n");
+	    /*
+	      if(keyHandler.getPaused() && firstCheck && Creature.divideCount > 0) {
+	      consoleSB.append("\n\nMost developed creature's genome: \n");
+	      consoleSB.append(mostDeveloped.getGenome());
+	      firstCheck = false;
+	      }
+	    */
 	    
-	    int gdtSize = generationDivisionTimes.size();
-	    
-	    
-	    for(int i = 0; i < gdtSize; i++) {
-
-		Vector<Integer> genScore = genScores.elementAt(i);
-
+	    if(keyHandler.getPrintGenome()) {
+		keyHandler.setPrintGenome(false);
 		
-		if(genScore.size() > 30) {
-		    //consoleSB.append(i + ": ");
+		if(mostDeveloped != null) {
+		    consoleSB.append(mostDeveloped.getGenome());
+		}
+	    }
+	    
+	    // We either want to print something to the console or write it to a file
+	    if(keyHandler.getPrintTimes() || keyHandler.getWriteToFile()
+	       || (!GRAPHICS && genCount % 5 == 0 && newGenCreated)) {
+
+		keyHandler.setPrintTimes(false);
+		newGenCreated = false;
+
+		consoleSB = new StringBuffer();
+		
+		consoleSB.append(Creature.divideCount + " divisions have occured\n");
+		consoleSB.append("Division times for each generation:\n\n");
+		
+		int gdtSize = genScores.size();
+		
+		
+		for(int i = 0; i < gdtSize; i++) {
+		    
+		    Vector<Integer> genScore = genScores.elementAt(i);
+		    
+		    
+		    if(genScore.size() > 30) {
+			//consoleSB.append(i + ": ");
+			
+			/*
+			  int sum = 0;
+			  
+			  
+			  for(int score: genScore) {
+			  //consoleSB.append(l + ", ");
+			  //if(l < 100000) {
+			  //sum += l;
+			  sum += score;
+			  //}
+			  }
+			  
+			  consoleSB.append((double)sum / (double)genScore.size());
+			*/
+			
+			//consoleSB.append(genScore.elementAt(genScore.size() / 2));
+			consoleSB.append(genScore.elementAt(0));
+			
+			if(genScore.size() != HERB_START_COUNT) {
+			    consoleSB.append(" num creatures: " + genScore.size());
+			}
+			
+			consoleSB.append("\n");
+		    }
+		    
+		}
+		
+		
+		
+		consoleSB.append("\n\n\n");
+		
+		System.out.print(consoleSB.toString());
+		
+	    }
+	    
+	    if(keyHandler.getWriteToFile()) {
+		
+		keyHandler.setWriteToFile(false);
+		
+		try{
+		    
+		    File f = new File("test.txt");
+		    
+		    if(f.createNewFile()) {
+			System.out.println("file created");
+		    }
+		    
+		    f.setWritable(true);
+		    BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
+		    out.write(consoleSB.toString());
+		    out.close();
+		    
 		    
 		    /*
-		    int sum = 0;
-		    
-		    
-		    for(int score: genScore) {
-			//consoleSB.append(l + ", ");
-			//if(l < 100000) {
-			    //sum += l;
-			    sum += score;
-			    //}
-		    }
-		    
-		    consoleSB.append((double)sum / (double)genScore.size());
+		      PrintWriter pw = new PrintWriter("text.txt", "UTF-8");
+		      pw.print(consoleSB.toString());
+		      pw.close();
 		    */
-
-		    consoleSB.append(genScore.elementAt(genScore.size() / 2));
-
-		    if(genScore.size() != HERB_START_COUNT) {
-			consoleSB.append(" num creatures: " + genScore.size());
-		    }
 		    
-		    consoleSB.append("\n");
+		} catch(Exception e) { 
+		    System.out.println("ERROR: Could not write to file."); 
+		    e.printStackTrace();
 		}
-	    
 	    }
 	    
-	    
-
-	    consoleSB.append("\n\n\n");
-
-	    System.out.print(consoleSB.toString());
-
-	}
-
-	if(keyHandler.getWriteToFile()) {
-
-	    keyHandler.setWriteToFile(false);
-
-	    try{
+	    if(GRAPHICS && moveCount >= movesPerFrame) {
 		
-		File f = new File("test.txt");
-
-		if(f.createNewFile()) {
-		    System.out.println("file created");
+		moveCount %= movesPerFrame;
+		
+		// Call draw for all GameObjects in our controller
+		repaint();
+		
+		// Sleep to allow user's eyes to actually process what is going
+		// on.
+		// If only we could see more frames per second...
+		
+		try {
+		    Thread.sleep(1000 / FPS);
+		} catch (InterruptedException e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
 		}
-
-		f.setWritable(true);
-		BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
-		out.write(consoleSB.toString());
-		out.close();
-		
-
-		/*
-		PrintWriter pw = new PrintWriter("text.txt", "UTF-8");
-		pw.print(consoleSB.toString());
-		pw.close();
-		*/
-
-	    } catch(Exception e) { 
-		System.out.println("ERROR: Could not write to file."); 
-		e.printStackTrace();
 	    }
-	}
-
-        if(GRAPHICS && moveCount >= movesPerFrame) {
-
-            moveCount %= movesPerFrame;
-
-            // Call draw for all GameObjects in our controller
-            repaint();
 	    
-            // Sleep to allow user's eyes to actually process what is going
-            // on.
-            // If only we could see more frames per second...
-
-            try {
-                Thread.sleep(1000 / FPS);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
-        movesPerFrame = mpfSlider.getValue();
-
+	    movesPerFrame = mpfSlider.getValue();
+	    
+	}
     }
-}
-
+    
     public void createNewGeneration() {
-
+	
 	/*
 	  for(Creature c: curGen) {
 	  System.out.print(c.getAmountEaten() + " ");
 	  }
 	  
-	  System.out.println("\n");
+	  System.out.println("\n\n");
 	*/
 	
 	
@@ -513,8 +526,6 @@ public class Evol extends JApplet implements Runnable {
 	// Important to compute this outside of for loop. We only want the
 	// ancestors to have their genomes passed on, not the current generation's
 	int curGenSize = curGen.size();
-	
-	int curGenIndex = 0;
 	
 	//boolean restart = true;
 	
@@ -534,51 +545,53 @@ public class Evol extends JApplet implements Runnable {
 	  }
 	*/
 	
-	for(int i = 0; i < HERB_START_COUNT; i++) {
-	    Creature newVeg = new Creature(xCreatureRange(), 
-					   yCreatureRange(), 
-					   initAngle(), 0, this);
+	double eliteProportion = 0.25;
+	
+	// Repopulate creatures
+	for(int i = 0; i < HERB_START_COUNT * eliteProportion; i++) {
+
+	    // Get an ancestor creature in top eliteProportion% we know to b
+	    Creature ancestor = curGen.elementAt(i);
 	    
-	    
-	    /*
-	      if(restart) {
-	      for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-	      newVeg.setGene(geneNum, r.nextLong());
-	      }
-	      }
-	    */
-	    
-	    //if(!restart) {
-	    // Set the child's genome to be mutated from an ancestor's genome
-	    if(curGenIndex > curGenSize / 2) {
-		curGenIndex = 0;
+	    // Generate eliteProporiton - 1 mutates from original creature
+	    for(int j = 0; j < (1.0 / eliteProportion) - 1; j++) {
+
+		Creature newVeg = new Creature(xCreatureRange(), 
+					       yCreatureRange(), 
+					       initAngle(), 0, this);
+
+		
+		// Set the genes of the new Creature
+		for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+		    newVeg.setGene(geneNum, ancestor.getGene(geneNum));
+		}
+		
+		
+		//int numMutations = r.nextInt(Creature.MUTATION_RATE);
+		
+		for(int k = 0; k < Creature.MUTATION_RATE; k++) {
+		    newVeg.mutate();
+		}
+
+		newVeg.setNumAncestors(genCount);
+		
+		controller.add(newVeg);
 	    }
 	    
-	    Creature ancestor = curGen.elementAt(curGenIndex);
+	    // Make new creature that will have same genome as the ancestor
+	    Creature ancestorCopy = new Creature(xCreatureRange(), 
+						 yCreatureRange(), 
+						 initAngle(), 0, this);
 	    
+	    // Set genes to be the same as the ancestor's and do not mutate
 	    for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-		newVeg.setGene(geneNum, ancestor.getGene(geneNum));
-	    }
+		ancestorCopy.setGene(geneNum, ancestor.getGene(geneNum));
+	    }	
+
+	    ancestorCopy.setNumAncestors(genCount);
 	    
+	    controller.add(ancestorCopy);	    
 	    
-	    //int numMutations = r.nextInt(Creature.MUTATION_RATE);
-	    
-	    for(int j = 0; j < Creature.MUTATION_RATE; j++) {
-		newVeg.mutate();
-	    }
-	    
-	    //}
-	    
-	    newVeg.setNumAncestors(genCount);
-	    
-	    controller.add(newVeg);
-	    
-	    if(curGenIndex > curGenSize / 2) {
-		curGenIndex = 0;
-	    }
-	    
-	    
-	    curGenIndex++;
 	}
 	
 	this.curGen = new Vector<Creature>();
@@ -590,6 +603,8 @@ public class Evol extends JApplet implements Runnable {
 				    yFoodRange(), // y coordinate
 				    r.nextInt(MAX_FOOD_AMOUNT))); // size
 	}
+
+	newGenCreated = true;
     }
     
     

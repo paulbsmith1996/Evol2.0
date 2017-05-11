@@ -3,6 +3,7 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.util.Scanner;
 import java.util.Vector;
+import java.math.BigInteger;
 
 
 public class Creature extends GameObject {
@@ -17,7 +18,7 @@ public class Creature extends GameObject {
 
     private MersenneTwister rand;
 
-    private final String[] INSTRUCTIONS = {"A ", "C ", "R1", "R2"};
+    private final String[] INSTRUCTIONS = {"A", "C", "R", "L"};
 
     private int count;
     protected static int divideCount = 0;
@@ -67,7 +68,7 @@ public class Creature extends GameObject {
     private final int ON_FOOD = 8;
 
     // NUM_INSTRUCTIONS * INSTRUCTION_LENGTH <= 64
-    private final int NUM_INSTRUCTIONS = 20;
+    private final int NUM_INSTRUCTIONS = 32;
     private final int INSTRUCTION_LENGTH = 2;
 
     private int fleeing;
@@ -583,15 +584,37 @@ public class Creature extends GameObject {
         setGene(geneNum, genes[geneNum] ^= mutIndex);
     }
 
-    public void transpose(int geneNum, String transposon) {
+    public int transpose(int geneNum, String transposonAlpha) {
 
 	long gene = genes[geneNum];
+
+	char[] transposonLetterArr = transposonAlpha.toCharArray();
+
+	String transposon = "";
+
+	// Translate each letter in transposonAlpha to the bit code
+	// it represents
+	for(char letter: transposonLetterArr) {
+	    
+	    String translation = "";
+	    if(letter == 'A') {
+		translation = "00";
+	    } else if(letter == 'C') {
+		translation = "01";		
+	    } else if(letter == 'R') {
+		translation = "10";		
+	    } else if(letter == 'L') {
+		translation = "11";
+	    }
+	    
+	    transposon += translation;
+	}
+
 	int tLength = transposon.length();
 
+	// Compute reverse String of transposon
 	char[] transposonLetters = transposon.toCharArray();
-
 	String transposonR = "";
-
 	for(int index = transposonLetters.length - 1; index >= 0; index--) {
 	    transposonR += transposonLetters[index];
 	}
@@ -599,22 +622,41 @@ public class Creature extends GameObject {
 	// Get the binary representation of the gene
 	String geneStr = Long.toBinaryString(gene);
 
+	while(geneStr.length() < 64) {
+	    geneStr = "0" + geneStr;
+	}
+
 	// Find first flanking sequence
 	int FSIndex = geneStr.indexOf(transposon);
 	String geneStrCopy = "" + geneStr;
+
+	String mList = "";
+	
+	for(int mNum = 0; mNum < tLength; mNum++) {
+	    mList += "M";
+	}
 	
 	// Find replications of the flanking sequence
 	Vector<Integer> possiblePositions = new Vector<Integer>();
 
-	geneStrCopy.replaceAll(transposon, "M");
-	geneStrCopy.replaceAll(transposonR, "M");
+	int gscLen = geneStrCopy.length();
+
+	for(int ii = 0; ii + tLength < gscLen; ii += INSTRUCTION_LENGTH) {
+
+	    String instructionCode = geneStrCopy.substring(ii, ii + tLength);
+	    if(instructionCode.equals(transposon) || instructionCode.equals(transposonR)) {
+		geneStrCopy = geneStrCopy.substring(0, ii) + mList 
+		    + geneStrCopy.substring(ii + tLength);
+	    }
+
+	}
 
 	int cutOffFromStart = 0;
 
 	// Get all indices preceded or followed by the transposon or its reverse
-	while(geneStrCopy.contains("M")) {
+	while(geneStrCopy.contains(mList)) {
 
-	    int firstInstanceIndex = geneStrCopy.indexOf("M");
+	    int firstInstanceIndex = geneStrCopy.indexOf(mList);
 	    
 	    if(!possiblePositions.contains(firstInstanceIndex + cutOffFromStart)) {
 		possiblePositions.add(firstInstanceIndex + cutOffFromStart);
@@ -625,18 +667,45 @@ public class Creature extends GameObject {
 		possiblePositions.add(firstInstanceIndex + cutOffFromStart + tLength);
 	    }
 
-	    geneStrCopy = geneStrCopy.substring(firstInstanceIndex + 1);
+	    geneStrCopy = geneStrCopy.substring(firstInstanceIndex + mList.length());
 	    cutOffFromStart += firstInstanceIndex + tLength;
 	}
 
 	// Choose a random place to put the transposon
-	int newPos = possiblePositions.elementAt(rand.nextInt(possiblePositions.size()));
+	if(possiblePositions.size() > 0) {
 
-	// Move transposon to the new spot in the gene
-	geneStr.replaceFirst(transposon, "");
-	geneStr = geneStr.substring(0, newPos) + transposon + geneStr.substring(newPos + 1);
+	    int oldPosIndex = rand.nextInt(possiblePositions.size() - 1);
+	    int oldPos = possiblePositions.elementAt(oldPosIndex);
 
-	setGene(geneNum, Long.parseLong(geneStr, 2));
+	    String seqTransposing = geneStr.substring(oldPos, 
+						   possiblePositions.elementAt(oldPosIndex + 1));
+
+	    int newPos = possiblePositions.elementAt(rand.nextInt(possiblePositions.size()));
+
+	    
+	    // Move transposon to the new spot in the gene
+	    if(oldPos < newPos) {
+		geneStr = geneStr.substring(0, oldPos)
+		    + geneStr.substring(oldPos + seqTransposing.length(), newPos)
+		    + seqTransposing
+		    + geneStr.substring(newPos);
+	    } else if(oldPos > newPos) {
+		geneStr = geneStr.substring(0, newPos) 
+		    + seqTransposing
+		    + geneStr.substring(newPos, oldPos)
+		    + geneStr.substring(oldPos + seqTransposing.length());
+	    } else {
+		return -1;
+	    }
+
+	    //System.out.println("Transposed Gene: " + geneStr);
+	    
+	    setGene(geneNum, new BigInteger(geneStr, 2).longValue());
+
+	    return 0;
+	} else {
+	    return -1;
+	}
 	
 
     }
@@ -748,9 +817,23 @@ public class Creature extends GameObject {
     }
 
     public static void main(String[] args) {
-	Creature c = new Creature(0, 0, 0, 0, new Evol());
-	System.out.println(c.getGenome());
-	c.transpose(0, "00");
-	System.out.println(c.getGenome());
+
+	for(int temp = 0; temp < 1000; temp++) {
+	    Creature c = new Creature(0, 0, 0, 0, new Evol());
+
+	    String originalGenome = c.getGenome();
+	    
+	    //System.out.println(originalGenome);
+
+	    if(c.transpose(0, "AA") == -1) {
+		System.out.println("Could not transpose on this gene.");
+	    } else {
+		//System.out.println(originalGenome);
+		//System.out.println(c.getGenome());
+	    }
+	    
+	    //System.out.println("Creature " + temp + " transposed successfully");
+
+	}
     }
 }

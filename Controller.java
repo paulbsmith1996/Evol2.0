@@ -16,6 +16,8 @@ public class Controller extends Vector<GameObject> {
     // If the object should be considered dead, it is removed from the controller.
     // NOTE: This method is strangely implemented to deal with the case of multiple
     // removes in one call.
+
+    // Implement new version by creating new vector and adding only alive objects
     public void testObjects() {
 
         // Get the number of objects in the game.
@@ -38,25 +40,38 @@ public class Controller extends Vector<GameObject> {
                 break;
             } else if (obj instanceof Creature && ((Creature) obj).getFoodPoints() <= 0) {
 
+
                 // Creature has starved or been eaten
                 Creature toDie = (Creature) obj;
                 int creatNumAncestors = toDie.getNumAncestors();
                 int amountEaten = toDie.getAmountEaten();
+
+		// Add score to sorted vectors
                 if (creatNumAncestors >= Evol.genScores.size()) {
                     Evol.genScores.add(new Vector<Integer>());
                 }
+
+		// Get the vector holding generation scores
                 Vector<Integer> creatureGen = Evol.genScores.elementAt(creatNumAncestors);
                 int creatureGenSize = creatureGen.size();
                 int index = 0;
 
                 // Get the index where we need to put divideTime to get a sorted vector
-                while (index < creatureGenSize) {
+                //while (index < creatureGenSize) {
+		while(index < creatureGenSize) {
                     if (amountEaten >= creatureGen.elementAt(index)) break;
                     index++;
                 }
 
+		// Insert score into sorted vector
                 creatureGen.insertElementAt(amountEaten, index);
+
+		// Insert creature with score at position i to ith place
                 Evol.curGen.insertElementAt(toDie, index);
+
+
+
+
 
                 if(!toDie.divided()) {
 
