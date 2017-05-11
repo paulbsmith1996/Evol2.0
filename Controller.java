@@ -1,15 +1,20 @@
+/*
+ * Manages all simulation objects.
+ */
+
 import java.awt.Graphics;
 import java.util.Vector;
+
 
 public class Controller extends Vector<GameObject> {
 
     // Calls draw() on every GameObject that is currently in the game,
     // updating all positions graphically.
     public void draw(Graphics g) {
-        for (int i = 0; i < size(); i++) {
-            GameObject obj = elementAt(i);
-            obj.draw(g);
-        }
+	for (int i = 0; i < size(); i++) {
+	    GameObject obj = elementAt(i);
+	    obj.draw(g);
+	}
     }
 
     // Tests for death or consumption of GameObject.
@@ -20,18 +25,15 @@ public class Controller extends Vector<GameObject> {
     // Implement new version by creating new vector and adding only alive objects
     public void testObjects() {
 
-        // Get the number of objects in the game.
-        int size = size();
-
         // Keeps track of whether an object was removed. If this is the case, we will
         // make another pass to check that we do not need to remove another GameObject.
         boolean modified = false;
 
         // NOTE: THIS METHOD NEEDS FIXING! (weird solution to out of bounds error)
-        for (int i = 0; i < size; i++) {
+	for (int i = 0; i < size(); i++) {
 
-            // Fetch the ith game object.
-            GameObject obj = elementAt(i);
+	    // Fetch element.
+	    GameObject obj = elementAt(i);
 
             // Remove food source if it has been consumed.
             if (obj instanceof Food && ((Food) obj).getAmount() <= 0) {
@@ -47,12 +49,13 @@ public class Controller extends Vector<GameObject> {
                 int amountEaten = toDie.getAmountEaten();
 
 		// Add score to sorted vectors
-                if (creatNumAncestors >= Evol.genScores.size()) {
-                    Evol.genScores.add(new Vector<Integer>());
+                if (creatNumAncestors >= Evol.generationScores.size()) {
+                    Evol.generationScores.add(new Vector<Integer>());
                 }
 
 		// Get the vector holding generation scores
-                Vector<Integer> creatureGen = Evol.genScores.elementAt(creatNumAncestors);
+                Vector<Integer> creatureGen = Evol.generationScores.elementAt(creatNumAncestors);
+
                 int creatureGenSize = creatureGen.size();
                 int index = 0;
 
@@ -67,9 +70,7 @@ public class Controller extends Vector<GameObject> {
                 creatureGen.insertElementAt(amountEaten, index);
 
 		// Insert creature with score at position i to ith place
-                Evol.curGen.insertElementAt(toDie, index);
-
-
+                Evol.currentGenDead.insertElementAt(toDie, index);
 
 
 
@@ -93,6 +94,7 @@ public class Controller extends Vector<GameObject> {
                 break;
 
             }
+	    
         }
 
         // We remove one GameObject per pass. If a GameObject has been removed, we need to make
@@ -105,10 +107,9 @@ public class Controller extends Vector<GameObject> {
     public void removeFood() {
 
         boolean modified = false;
-        int size = size();
 
-        for (int index = 0; index < size; index++) {
-            GameObject obj = elementAt(index);
+	for (int i = 0; i < size(); i++) {
+	    GameObject obj = elementAt(i);
             if (obj instanceof Food) {
                 remove(obj);
                 modified = true;
@@ -122,19 +123,14 @@ public class Controller extends Vector<GameObject> {
 
     // Helpful method that prints out the current number of Creatures that are alive.
     public void printCreatureNum() {
-
         int count = 0;
-        int size = size();
-
-        for (int i = 0; i < size; i++) {
-            GameObject obj = elementAt(i);
+	for (int i = 0; i < size(); i++) {
+	    GameObject obj = elementAt(i);
             if (obj instanceof Creature && ((Creature) obj).getSpecies() == 0) {
-                count++;
+		count++;
             }
         }
-
         System.out.println(count);
-
     }
     
 }

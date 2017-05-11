@@ -1,3 +1,7 @@
+/*
+ * A creature trying to eat and survive in the simulation environment.
+ */
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;

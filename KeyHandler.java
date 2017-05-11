@@ -1,4 +1,11 @@
-import java.awt.event.*;
+/*
+ * A class to handle all applet keyboard interactions.
+ */
+
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyListener;
+
 
 public class KeyHandler extends KeyAdapter implements KeyListener {
 

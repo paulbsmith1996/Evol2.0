@@ -21,22 +21,16 @@ CLASSES=$(wildcard *.class)
 .PHONY: all run evol clean fresh
 
 # Compile everything (e.g., `make`).
-all: evol
+all: clean evol
 
 # Launch the applet (e.g., `make run`).
-run: $(OBJ)
+run: clean evol
 	appletviewer Evol.java
 
 # Compile Evol code (e.g., `make evol`).
-evol: $(OBJ)
-
-# Compile project source.
-$(OBJ):
+evol:
 	$(JC) $(SRC)
 
 # Remove .class files.
 clean:
 	$(RM) $(CLASSES)
-
-# Clean and recompile everything.
-fresh: clean all

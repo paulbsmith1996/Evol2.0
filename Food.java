@@ -1,3 +1,7 @@
+/*
+ * Consumable food in the simulation environment.
+ */
+
 import java.awt.Color;
 import java.awt.Graphics;
 
