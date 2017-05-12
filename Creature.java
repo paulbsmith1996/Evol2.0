@@ -740,7 +740,7 @@ public class Creature extends GameObject {
         + "Gene 2 (On Food)     : " + toInst(genes[1], NUM_INSTRUCTIONS) + "\n"
         + "Gene 3 (See Food)    : " + toInst(genes[2], NUM_INSTRUCTIONS) + "\n"
         + "Gene 4 (Unstimulated): " + toInst(genes[3], NUM_INSTRUCTIONS) + "\n\n"
-        + "----------------------------------------------";
+        + "----------------------------------------------\n";
 
     }
 

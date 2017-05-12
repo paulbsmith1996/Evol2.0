@@ -84,7 +84,7 @@ public class Evol extends JApplet implements Runnable {
     private Creature mostDevelopedCreature;
 
     // Whether or not applet graphics are toggled on.
-    private boolean graphics = false;
+    private boolean graphics = true;
 
     // A key handler for keyboard interaction with the applet.
     private KeyHandler keyHandler;
@@ -668,9 +668,11 @@ public class Evol extends JApplet implements Runnable {
 			newPrey.mutate();
 		    }
 		    
+		    /*
 		    if(rand.nextInt(1000) > 836) {
 			newPrey.transpose(rand.nextInt(Creature.NUM_GENES), "A");
 		    }
+		    */
 		    
 		    newPrey.setNumAncestors(genCount);
 		    
