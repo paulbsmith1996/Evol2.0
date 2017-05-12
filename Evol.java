@@ -186,8 +186,6 @@ public class Evol extends JApplet implements Runnable {
 
     // Generates a y-coordinate for a new food source.
     public int nextFoodYPos() {
-	//return 2 * enviHeight / 3; 
-	//return rand.nextInt(enviHeight - enviOffset);
 	return 2 * enviHeight / 3;
     }
 
@@ -198,23 +196,17 @@ public class Evol extends JApplet implements Runnable {
 
     // Randomly generates a Creature x-coordinate.
     public int nextCreatureXPos() {
-	//return rand.nextInt(enviWidth - 4 * enviOffset) + 2 * enviOffset; 
-	//return rand.nextInt(enviWidth - enviOffset);
 	return enviWidth / 2;
-	//return rand.nextInt(enviWidth - 6 * enviOffset) + 3 * enviOffset;
-	// return rand.nextInt(enviHeight - enviOffset);
     }
 
     // Generates a Creature y-coordinate.
     public int nextCreatureYPos() {
-	//return 50 + rand.nextInt(100); 
-	//return rand.nextInt(enviHeight - enviOffset);
 	return enviHeight / 3;
     }
 
     // Randomly generates an orientation for a creature to spawn with.
+    // Each creature has the same orientation (0)
     public double nextCreatureAngle() {
-	// return rand.nextInt(4) * Math.PI / 2; 
 	return 0;
     }
 
