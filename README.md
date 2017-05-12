@@ -2,6 +2,8 @@
 
 __Authors__: Paul Baird-Smith and Ross Flieger-Allison
 
+Runs in Java 7
+
 To run the applet from the coommand line, compile with the command
 
     javac Evol.java

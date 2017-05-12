@@ -31,20 +31,21 @@ public class Creature extends GameObject {
     private int numAncestors;
 
     private final int ROTATE_SPEED = 10;
+
+    // Original default division threshold is 10000
     private final int DEFAULT_DIVISION_THRESHOLD = 30000;
-    //private final int DEFAULT_DIVISION_THRESHOLD = 10000;
     private final int START_MOVE_SPEED = 10;
     private final int START_EAT_SPEED = 100;
     private final int DEFAULT_FP = 3000;
-    // default is 20
+    // Original default starving rate is 20
     private final int DEFAULT_STARVING_RATE = 5;
     private final int VISION_DISTANCE = 100;
 
-    // Default mutation rate is 10
+    // Original default mutation rate is 10
     protected static final int MUTATION_RATE = 5;
 
     private int starvingRate = DEFAULT_STARVING_RATE;
-    // usually just set to default
+    // Usually just set to default
     private int divisionThreshold = 10 * DEFAULT_DIVISION_THRESHOLD;
 
     // How far off the Creature can be from the center of a food source
@@ -100,15 +101,12 @@ public class Creature extends GameObject {
     public Creature(int x, int y, double rot, int species, Evol game) {
         super(x, y);
 
+	// Get variables from the Evol app
         rand = game.getRand();
-
         this.game = game;
-
         this.enviWidth = game.getEnviWidth();
         this.enviHeight = game.getEnviHeight();
-
         this.enviBounds = game.getEnviBounds();
-
         this.enviObjects = game.getController();
 
         this.numAncestors = 0;
@@ -118,6 +116,7 @@ public class Creature extends GameObject {
 
         this.vision = new int[2][2];
 
+	// Set Color
         if(species == 0) {
             this.color = Color.BLUE;
         } else {
@@ -136,6 +135,7 @@ public class Creature extends GameObject {
             genes[i] = rand.nextInt();
         }
 
+	// Set default parameters
         this.fleeing = 0;
         this.dead = false;
 	this.divided = false;
@@ -149,6 +149,7 @@ public class Creature extends GameObject {
 
         this.divisionThreshold *= (4 * species) + 1;
 
+	// Get coordinates of points for Creature
         xPoints[0] = x;
         xPoints[1] = x - width / 2;
         xPoints[2] = x + width / 2;
@@ -156,14 +157,19 @@ public class Creature extends GameObject {
         yPoints[0] = y - 3 * height / 4;
         yPoints[1] = yPoints[2] = y + height / 4;
 
+	// Set initial size and angle
         setSize(foodPoints);
-
         rotate(rot);
 
+	// Start all counts to 0
         count = 0;
         instCount = 0;
 	this.timeToDivide = 0;
     }
+
+    //===========================
+    // GETTER AND SETTER METHODS
+    //===========================
 
     public void setAmountEaten(int ae) { this.amountEaten = ae; }
     public int getAmountEaten() { return this.amountEaten; }
@@ -198,27 +204,18 @@ public class Creature extends GameObject {
     public boolean divided() { return this.divided; }
     public void setDivided(boolean d) { this.divided = d; }
     
-    public int getStarvingRate() {
-        return starvingRate;
-    }
+    public int getStarvingRate() { return starvingRate; }
+    public void setStarvingRate(int starvingRate) { this.starvingRate = starvingRate; }
 
-    public void setStarvingRate(int starvingRate) {
-        this.starvingRate = starvingRate;
-    }
-
-    public int getSpecies() {
-        return species;
-    }
-
-    public void setSpecies(int species) {
-        this.species = species;
-    }
+    public int getSpecies() { return species; }
+    public void setSpecies(int species) { this.species = species; }
 
     public int getFoodPoints() { return this.foodPoints; }
+    public void setFoodPoints(int points) { this.foodPoints = points; }
 
-    public void setFoodPoints(int points) {
-        this.foodPoints = points;
-    }
+    //=================================
+    // INCREMENTER METHODS FOR X AND Y
+    //=================================
 
     public void incX(int increment) {
         for(int i = 0; i < 3; i++) {
@@ -236,10 +233,12 @@ public class Creature extends GameObject {
         setY(getY() + increment);
     }
 
+    // Getter method for vision
     public int[][] getVision() {
         return this.vision;
     }
 
+    // Set vision at the angle rot
     public void setVision(double rot) {
 
         vision[0][0] = getX();
@@ -272,9 +271,6 @@ public class Creature extends GameObject {
         int numObjects = enviObjects.size();
 
         stimulated = false;
-        //stimFood = false;
-        //stimFlee = false;
-        //stimFight = false;
 
         // Sets the first 4 bits to 0
         stimuli &= (~15);
@@ -358,14 +354,13 @@ public class Creature extends GameObject {
                 stimulated = true;
 
                 if (obj instanceof Food && species < 1) {
-                    //stimFood = true;
                     setStimFood();
                 } else if (obj instanceof Creature) {
                     if (((Creature) obj).getSpecies() > species) {
-                        //stimFlee = true; // die() if too close;
+                        // die() if too close;
                         setStimFlee();
                     } else if (((Creature) obj).getSpecies() < species) {
-                        //stimFight = true; // kill((Creature)obj) if close
+                        // kill((Creature)obj) if close
                         // enough;
                         setStimFight();
                     }
@@ -383,10 +378,10 @@ public class Creature extends GameObject {
                     setStimFood();
                 } else if (obj instanceof Creature) {
                     if (((Creature) obj).getSpecies() > species) {
-                        //stimFlee = true; // die() if too close;
+                        // die() if too close;
                         setStimFlee();
                     } else if (((Creature) obj).getSpecies() < species) {
-                        //stimFight = true; // kill((Creature)obj) if close
+                        //kill((Creature)obj) if close
                         // enough;
                         setStimFight();
                     }
@@ -400,6 +395,7 @@ public class Creature extends GameObject {
 
     }
 
+    // Set Creature to be dead
     public void die() {
         this.foodPoints = 0;
 
@@ -410,11 +406,14 @@ public class Creature extends GameObject {
         dead = true;
     }
 
+    // Kill the target creature
     public void kill(Creature enemy) {
         foodPoints += enemy.getFoodPoints();
         enemy.die();
     }
 
+    // Called by prey when it is on food and consumes maximum amount
+    // possible for a bite
     public void eat(Food food) {
 
         int foodAmount = food.getAmount();
@@ -433,6 +432,7 @@ public class Creature extends GameObject {
 
     }
 
+    // Set the size of the Creature to size
     public void setSize(int size) {
         width = ((int) Math.pow(size, 0.25));
         height = 2 * width;
@@ -463,6 +463,7 @@ public class Creature extends GameObject {
 
     }
 
+    // Rotate the Creature clockwise by angle
     public void rotate(double angle) {
 
         for (int i = 0; i < 3; i++) {
@@ -482,7 +483,8 @@ public class Creature extends GameObject {
         setVision(rot);
 
     }
-
+    
+    // Execute the next instruction
     public long move() {
         if (!dead) {
 
@@ -517,6 +519,7 @@ public class Creature extends GameObject {
 
                 }
 
+		// Prep to read next instruction
                 instCount++;
                 instCount %= NUM_INSTRUCTIONS;
 
@@ -531,26 +534,29 @@ public class Creature extends GameObject {
     // Will execute the moves corresponding to the sequence of moves
     // starting at the indicated start bit in the gene
     public void execute(long gene, int inst) {
-        // 111111111111 = 2^13 - 1 = 4095
 
-        //long moveSeq = (((4095 << start) & gene) >> (64 - start));
-
+	// Get the bitcode for the instruction at inst
         int move = (int)((gene >> (INSTRUCTION_LENGTH * inst)) & 3);
 
         if(move == 3) {
+	    // Instruction is "L"
             rotate(Math.PI / 2);
         } else if(move == 2) {
+	    // Instruction is "R"
             rotate(3 * Math.PI / 2);
         } else if(move == 1) {
+	    // Instruction is "C"
             checkStimulus();
         } else {
+	    // Instrcution is "A"
             advance(enviBounds);
         }
     }
 
+    // Move creature forward within the given bounds
     public void advance(Rectangle bounds) {
 
-        // The tip of the creature
+        // The front tip of the creature
         int point = 3 * height / 4;
 
         if (rot == 0 && getY() - movementSpeed > point) {
@@ -566,17 +572,21 @@ public class Creature extends GameObject {
             // Facing right
             incX(movementSpeed);
         } else {
-            //rotate((Math.PI / 2) * (2 * rand.nextInt(2) - 1));
+	    // Running into a wall
             rotate(Math.PI);
         }
 
+	// Update the vision of the creature in case it turned
         setVision(rot);
     }
 
+    // Check that the creature is large enough to divide
     public boolean checkDivide() {
         return foodPoints > divisionThreshold;
     }
 
+    // Obsolete method from Evol1.0 used to kill a creature once it is too large
+    // Now no longer called from anywhere
     public long divide() {
 	divided = true;
 	divideCount++;
@@ -589,22 +599,28 @@ public class Creature extends GameObject {
 
         // Mutate an instruction randomly
         int mutIndex = (1 + rand.nextInt(3)) << rand.nextInt(32);
-	//System.out.println("MI: " + Integer.toBinaryString(mutIndex));
-
-
+	
+	// Pick a random gene from the genome to mutate
         int geneNum = rand.nextInt(NUM_GENES);
-	//System.out.println("GN: " + geneNum);
 
         // Toggles the bit at the mutIndex index
         setGene(geneNum, genes[geneNum] ^= mutIndex);
     }
 
+    // Performs transposition on gene at geneNum in Creature's genome.
+    // Takes a transposon in instruction form(not bitcode form) to simplify calls
+    // to transpose().
+    // Searches for a sequence of instructions surrounded by transposonAlpha or the
+    // reverse of transposonAlpha on both sides and moves it to either prece or follow
+    // a new instance of transposonAlpha or its reverse:
+    // Gene 2: C R L A R R A C A L R C
+    // transpose(2, "A") -> C R L A A C A R R L R C
+    // In this example, we transposed "R R" to follow the third "A" instruction
     public int transpose(int geneNum, String transposonAlpha) {
 
+	// Get the gene and create the char[]
 	int gene = genes[geneNum];
-
 	char[] transposonLetterArr = transposonAlpha.toCharArray();
-
 	String transposon = "";
 
 	// Translate each letter in transposonAlpha to the bit code
@@ -636,7 +652,6 @@ public class Creature extends GameObject {
 
 	// Get the binary representation of the gene
 	String geneStr = Integer.toBinaryString(gene);
-
 	while(geneStr.length() < 32) {
 	    geneStr = "0" + geneStr;
 	}
@@ -645,17 +660,16 @@ public class Creature extends GameObject {
 	int FSIndex = geneStr.indexOf(transposon);
 	String geneStrCopy = "" + geneStr;
 
+	// Create a String of "M"s to replace instances of transposon and transposonR
+	// We will search for these when trying to find possible positions to transpose
+	// our sequence to.
 	String mList = "";
-	
 	for(int mNum = 0; mNum < tLength; mNum++) {
 	    mList += "M";
 	}
 	
-	// Find replications of the flanking sequence
-	Vector<Integer> possiblePositions = new Vector<Integer>();
-
+	// Find replications of the flanking sequence and replace with "M"s
 	int gscLen = geneStrCopy.length();
-
 	for(int ii = 0; ii + tLength < gscLen; ii += INSTRUCTION_LENGTH) {
 
 	    String instructionCode = geneStrCopy.substring(ii, ii + tLength);
@@ -666,9 +680,10 @@ public class Creature extends GameObject {
 
 	}
 
-	int cutOffFromStart = 0;
-
 	// Get all indices preceded or followed by the transposon or its reverse
+	// and save in a Vector
+	Vector<Integer> possiblePositions = new Vector<Integer>();
+	int cutOffFromStart = 0;
 	while(geneStrCopy.contains(mList)) {
 
 	    int firstInstanceIndex = geneStrCopy.indexOf(mList);
@@ -686,7 +701,7 @@ public class Creature extends GameObject {
 	    cutOffFromStart += firstInstanceIndex + tLength;
 	}
 
-	// Choose a random place to put the transposon
+	// Choose a random place to move the sequence to
 	if(possiblePositions.size() > 0) {
 
 	    int oldPosIndex = rand.nextInt(possiblePositions.size() - 1);
@@ -713,8 +728,7 @@ public class Creature extends GameObject {
 		return -1;
 	    }
 
-	    //System.out.println("Transposed Gene: " + geneStr);
-	    
+	    // Update Creature's genome
 	    setGene(geneNum, new BigInteger(geneStr, 2).intValue());
 
 	    return 0;
@@ -725,6 +739,7 @@ public class Creature extends GameObject {
 
     }
 
+    // Print the species of the creature, followed by its genome in readable form
     public void printGenome() {
         System.out.print("Species: " + species + "\n\n"
         + "Gene 1 (See Predator): " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n"
@@ -734,6 +749,7 @@ public class Creature extends GameObject {
         + "----------------------------------------------\n\n");
     }
 
+    // Return the species of the creature, followed by its genome in readable form    
     public String getGenome() {
         return "\n\nSpecies: " + species + "\n\n"
         + "Gene 1 (See Predator): " + toInst(genes[0], NUM_INSTRUCTIONS) + "\n"
@@ -744,15 +760,21 @@ public class Creature extends GameObject {
 
     }
 
+    // Print the gene at geneNum in the creature's genome in readable form
     public void printGene(int geneNum) {
         System.out.println(toInst(genes[geneNum], NUM_INSTRUCTIONS));
     }
 
+    // Get the count of inst in the gene at geneNum in the creature's genome
     public int getInstCountinGene(int geneNum, String inst) {
 
+	// Evaluates to true if the passed String is not a valid instruction
         boolean err = true;
+
+	// Count of instructions in the gene
         int count = 0;
 
+	// Check that we have a valid instruction
         for(String s: INSTRUCTIONS) {
             if(inst.equals(s)) {
                 err = false;
@@ -760,14 +782,14 @@ public class Creature extends GameObject {
             }
         }
 
+	// Error print if inst is not a valid instruction
         if(err) {
             System.err.println("PrintInstCountinGene given invalid instruction String");
         }
 
+	// Count the number of occurences of the given instructions
         String instList = toInst(genes[geneNum - 1], NUM_INSTRUCTIONS);
-
         Scanner listScan = new Scanner(instList);
-
         String next = "";
 
         while(listScan.hasNext()) {
@@ -780,18 +802,17 @@ public class Creature extends GameObject {
         return count;
     }
 
+    // Return a readable version of the gene, which is an integer representation of
+    // a binary String
     public String toInst(int gene, int numInst) {
 
         String result = "";
 
         for(int i = 0; i < numInst; i++) {
-            //int pos = i * INSTRUCTION_LENGTH;
 
+	    // Convert each bit code iteratively
             int toConvert = gene >> (i * INSTRUCTION_LENGTH) & 3;
-	    //int toConvert = (int)toConvertL;
-
             String inst = INSTRUCTIONS[toConvert];
-
 	    result += inst + " ";
 
 	}
@@ -800,8 +821,11 @@ public class Creature extends GameObject {
     }
 
     @Override
+    // Method to draw a creature onto the environment. Overrides the GameObject draw()
+    // method. Draws the Creature body, as well as its vision
 	public void draw(Graphics g) {
 	
+	// Get integer approximations of the x and y coordinates of the Creature
 	int[] approxX = new int[3];
 	int[] approxY = new int[3];
 	
@@ -810,29 +834,35 @@ public class Creature extends GameObject {
 	    approxY[i] = (int) yPoints[i];
 	}
 	
+	// Draw Creature border
 	g.setColor(Color.BLACK);
 	g.drawPolygon(approxX, approxY, 3);
 	
+	// Color the Creature appropriately
 	g.setColor(this.color);
-	
 	g.fillPolygon(approxX, approxY, 3);
-	
+
+	// Determine color of vision according to stimulus and draw vision
 	if (stimulated) {
 	    if (getStimFlee()) {
-		// Sees another Creature
+		// Negatively Stimulated
 		g.setColor(Color.RED);
 	    } else if (getStimFood() || getStimFight()) {
+		// Positively Stimulated
 		g.setColor(Color.GREEN);
 	    } else {
+		// Unstimulated
 		g.setColor(Color.ORANGE);
 	    }
 	} else {
+	    // If no stimulation, then unstimulated
 	    g.setColor(Color.ORANGE);
 	}
 	
 	g.drawLine(vision[0][0], vision[0][1], vision[1][0], vision[1][1]);
     }
 
+    // Tests utility methods. Currently testing effectiveness of transposition
     public static void main(String[] args) {
 
 	for(int temp = 0; temp < 1000; temp++) {
@@ -840,17 +870,9 @@ public class Creature extends GameObject {
 
 	    String originalGenome = c.getGenome();
 	    
-	    //System.out.println(originalGenome);
-
 	    if(c.transpose(0, "AA") == -1) {
 		System.out.println("Could not transpose on this gene.");
-	    } else {
-		//System.out.println(originalGenome);
-		//System.out.println(c.getGenome());
 	    }
-	    
-	    //System.out.println("Creature " + temp + " transposed successfully");
-
 	}
     }
 }
