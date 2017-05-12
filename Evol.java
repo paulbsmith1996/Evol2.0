@@ -102,9 +102,9 @@ public class Evol extends JApplet implements Runnable {
     private JSlider mpfSlider;
 
 
-    //============================
-    // IMMUTABLE SIMULATION STATE
-    //============================
+    //==============================================
+    // IMMUTABLE SIMULATION STATE (HYPERPARAMETERS)
+    //==============================================
 
     // Maximum number of moves that a creature can make before it dies.
     private final int MAX_TIME_ALIVE = 10000;
@@ -127,6 +127,7 @@ public class Evol extends JApplet implements Runnable {
     // Number of food sources generated per frame rendering * 1000.
     private final int FOOD_GEN_RATE = 5000;
     
+
     //==========================
     // MUTABLE SIMULATION STATE
     //==========================
@@ -158,6 +159,7 @@ public class Evol extends JApplet implements Runnable {
     // The number of generations that have occurred.
     private int genCount = 0;
 
+
     //================
     // IMPLEMENTATION
     //================
@@ -177,16 +179,12 @@ public class Evol extends JApplet implements Runnable {
 
     // Denerates an x-coordinate for a new food source.
     public int nextFoodXPos() {
-	//return rand.nextInt(enviWidth - 6 * enviOffset) + 3 * enviOffset; 
-	//return enviWidth / 2 - 20 + rand.nextInt(40);
-	//return rand.nextInt(enviWidth - enviOffset);
-	//return rand.nextInt(enviWidth - 6 * enviOffset) + 3 * enviOffset;
-	return enviWidth / 2;
+	return enviWidth / 2; // fixes food to the central vertical axis when spawned
     }
 
     // Generates a y-coordinate for a new food source.
     public int nextFoodYPos() {
-	return 2 * enviHeight / 3;
+	return 2 * enviHeight / 3; // fixes y in the bottom third of the environment
     }
 
     // Generates a size for a new food source.
@@ -196,26 +194,28 @@ public class Evol extends JApplet implements Runnable {
 
     // Randomly generates a Creature x-coordinate.
     public int nextCreatureXPos() {
-	return enviWidth / 2;
+	return enviWidth / 2; // fixes creature to the central vertical axis when spawned
     }
 
     // Generates a Creature y-coordinate.
     public int nextCreatureYPos() {
-	return enviHeight / 3;
+	return enviHeight / 3; // fixes y in the top third of the environment
     }
 
     // Randomly generates an orientation for a creature to spawn with.
     // Each creature has the same orientation (0)
     public double nextCreatureAngle() {
-	return 0;
+	return 0; // spawns all creatures oriented with the same angle
     }
 
+    // Generates an x-coordinate for a newly spawned predator.
     public int nextPredXPos() {
-	return enviWidth / 2;
+	return enviWidth / 2; // fixes predators in the exact middle of the environment
     }
 
+    // Generates a y-coordinate for a newly spawned predator.
     public int nextPredYPos() {
-	return enviHeight / 2;
+	return enviHeight / 2; // fixed in the exact middle of screen
     }
 
     // Applet initialization.
@@ -238,9 +238,6 @@ public class Evol extends JApplet implements Runnable {
 
 	// Initialize a pane for the text printed in the applet's console.
 	consoleText = new JTextPane();
-	//
-	// THIS DOESN'T WORK ???
-	//
         consoleText.setEditable(true);
         consoleText.setLocation(0, enviHeight);
         consoleText.setSize(consoleWidth, consoleHeight);
@@ -262,6 +259,7 @@ public class Evol extends JApplet implements Runnable {
 	// Initializes a new simulation object controller.
         controller = new Controller();
 
+	// Flag to ensure that paint isn't called while new generations are being computed.
 	newGenCreated = false;
 
 	// Initializes information-logging vectors.
@@ -325,9 +323,6 @@ public class Evol extends JApplet implements Runnable {
         while (running) {
 
 	    // Bring focus to the applet.
-	    //
-	    // CHECK IF THIS IS NECESSARY !!!
-	    //
             requestFocusInWindow();
 	    
 	    // If the simulation has been paused, skip this and do nothing.
@@ -437,12 +432,6 @@ public class Evol extends JApplet implements Runnable {
 
 	    }
 
-	    // If all prey has died, create a new generation.
-
-
-            
-		
-	    
 	    // If a most-developed creature exists, set it's color to green.
 	    if (mostDevelopedCreature != null) {
 		mostDevelopedCreature.setColor(Color.GREEN);
@@ -464,37 +453,16 @@ public class Evol extends JApplet implements Runnable {
 		// Toggle off print times so it doesn't print multiple times.
 		keyHandler.setPrintTimes(false);
 
-		// Add the divide count to the console buffer.
-		//consoleBuffer.append(Creature.divideCount + " divisions have occured\n");
-		//consoleBuffer.append("Division times for each generation:\n\n");
-		
 		// Add the generation division times to the console buffer.
 		int gdtSize = generationScores.size();
 		for (int i = 0; i < gdtSize; i++) {
 		    Vector<Integer> generationScore = generationScores.elementAt(i);
 		    if (generationScore.size() > 30) {
-			// consoleBuffer.append(i + ": ");
-			
-			/*
-			  int sum = 0;
-			  for (int score: generationScore) {
-			      //consoleBuffer.append(l + ", ");
-			      //if(l < 100000) {
-			      //sum += l;
-			      sum += score;
-			      //}
-			  }
-
-			  consoleBuffer.append((double) sum / (double) generationScore.size());
-			*/
-			
 			consoleBuffer.append("Generation " + i);
 			consoleBuffer.append(",  Best Creature: ");
 			consoleBuffer.append(generationScore.elementAt(0));
 			consoleBuffer.append(",  Median Creature: ");
 			consoleBuffer.append(generationScore.elementAt(generationScore.size() / 3));
-			//consoleBuffer.append("\n\n");
-
 			if (generationScore.size() != PREY_START_COUNT) {
 			    consoleBuffer.append(" num creatures: " + generationScore.size());
 			}
@@ -518,8 +486,6 @@ public class Evol extends JApplet implements Runnable {
 		// Add some extra newlines at the end.
 		consoleBuffer.append("\n\n\n");
 		
-		// Print the buffer context to the applet console.
-		
 	    }
 	    
 	    // If we want to write the data to a file.
@@ -538,11 +504,6 @@ public class Evol extends JApplet implements Runnable {
 		    BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
 		    out.write(consoleBuffer.toString());
 		    out.close();
-		    /*
-		      PrintWriter pw = new PrintWriter("text.txt", "UTF-8");
-		      pw.print(consoleBuffer.toString());
-		      pw.close();
-		    */
 		} catch (Exception e) { 
 		    System.out.println("ERROR: Could not write to file."); 
 		    e.printStackTrace();
@@ -564,9 +525,6 @@ public class Evol extends JApplet implements Runnable {
 		try {
 		    Thread.sleep(1000 / FPS);
 		} catch (InterruptedException e) {
-		    //
-		    // TODO: Auto-generated catch block
-		    //
 		    e.printStackTrace();
 		}
 	    }
@@ -581,13 +539,6 @@ public class Evol extends JApplet implements Runnable {
     // Creates a new generation of creatures.
     public void createNewGeneration() {
 	
-	/*
-	  for (Creature c: currentGenDead) {
-	  System.out.print(c.getAmountEaten() + " ");
-	  }
-	  System.out.println("\n");
-	*/
-
 	// Increment the generation count.
 	genCount++;
 
@@ -602,9 +553,9 @@ public class Evol extends JApplet implements Runnable {
 				    nextFoodSize()));
 	}
 
-
-	if(predators) {
-	    for(int predNum = 0; predNum < PRED_START_COUNT; predNum++) {
+	// Generate new predators, if they're toggled on.
+	if (predators) {
+	    for (int predNum = 0; predNum < PRED_START_COUNT; predNum++) {
 		controller.add(new Creature(nextPredXPos(),
 					    nextPredYPos(),
 					    0, 1, this));
@@ -614,27 +565,21 @@ public class Evol extends JApplet implements Runnable {
 	// Important to compute this outside of for loop. We only want the
 	// ancestors to have their genomes passed on, not the current generation's.
 	int currentGenDeadSize = currentGenDead.size();
-	
 	int currentGenDeadIndex = 0;
-	
-	double eliteProportion = 0.5;
-	//	double eliteProportion = 0.5 - (1 / (2 * genCount + 3));
-	
-	// Repopulate creatures
 
+	// The proportion of "parents" that we let live on to the next generation.
+	double eliteProportion = 0.5;
+	
 	// If all the scores are 0, create a new generation of random creatures
-	if(generationScores.elementAt(genCount - 1).elementAt(0) == 0) {
-	    for(int n = 0; n < PREY_START_COUNT; n++) {
+	if (generationScores.elementAt(genCount - 1).elementAt(0) == 0) {
+	    for (int n = 0; n < PREY_START_COUNT; n++) {
 		Creature newPrey = new Creature(nextCreatureXPos(), 
 						nextCreatureYPos(), 
 						nextCreatureAngle(), 0, this);
-
 		newPrey.setNumAncestors(genCount);
 		controller.add(newPrey);
 	    }
-
 	} else {
-
 	    for (int i = 0; i < PREY_START_COUNT * eliteProportion; i++) {
 		
 		// Get an ancestor creature in top eliteProportion% we know to b
@@ -642,35 +587,23 @@ public class Evol extends JApplet implements Runnable {
 		
 		// Generate eliteProporiton - 1 mutates from original creature
 		for (int j = 0; j < (1.0 / eliteProportion) - 1; j++) {
-		    
 		    Creature newPrey = new Creature(nextCreatureXPos(), 
 						    nextCreatureYPos(), 
 						    nextCreatureAngle(), 0, this);
-		    
 		    
 		    // Set the genes of the new Creature
 		    for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
 			newPrey.setGene(geneNum, ancestor.getGene(geneNum));
 		    }
 		    
-		    
-		    //int numMutations = rand.nextInt(Creature.MUTATION_RATE);
-		    
 		    for (int k = 0; k < Creature.MUTATION_RATE; k++) {
 			newPrey.mutate();
 		    }
 		    
-		    /*
-		    if(rand.nextInt(1000) > 836) {
-			newPrey.transpose(rand.nextInt(Creature.NUM_GENES), "A");
-		    }
-		    */
-		    
 		    newPrey.setNumAncestors(genCount);
-		    
 		    controller.add(newPrey);
+
 		}
-		
 		
 		// Make new creature that will have same genome as the ancestor
 		Creature ancestorCopy = new Creature(nextCreatureXPos(), 
@@ -683,9 +616,7 @@ public class Evol extends JApplet implements Runnable {
 		}	
 		
 		ancestorCopy.setNumAncestors(genCount);
-		
 		controller.add(ancestorCopy);	    
-		
 		
 	    }
 	}
@@ -693,6 +624,8 @@ public class Evol extends JApplet implements Runnable {
 	// Reset/clear the current generation's dead creatures.
 	this.currentGenDead = new Vector<Creature>();
 	
+	// Toggle flag so graphics get turned back, now that the generation is 
+	// fully created.
 	newGenCreated = true;
 
     }
@@ -752,26 +685,18 @@ public class Evol extends JApplet implements Runnable {
 	// DRAW SIMULATION STATISTICS
 	//============================
 	
-	//	g.setColor(Color.WHITE);
-	//g.fillRect(enviWidth + sliderXOffset, menuHeight - 40 - fontHeight,
-	//	   sliderWidth, fontHeight);
-	
-	if(genCount == 0) {
+	if (genCount == 0) {
 	    drawStat(g, "Best Score in Previous Gen: N/A", fontHeight, menuHeight - 80);
 	    drawStat(g, "Median Score in Previous Gen: N/A", fontHeight, menuHeight - 60);	    
 	} else {
-
 	    Vector<Integer> prevGenScores = generationScores.elementAt(genCount - 1);
-
 	    drawStat(g, "Best Score in Previous Gen: " 
 		     +  prevGenScores.elementAt(0), 
 		     fontHeight, menuHeight - 80);
-	    
 	    drawStat(g, "Median Score in Previous Gen: " 
 		     +  prevGenScores.elementAt(prevGenScores.size() / 2), 
 		     fontHeight, menuHeight - 60);
 	}
-	
 	drawStat(g, "Generation Number: " + mostAncestors, fontHeight, menuHeight - 20);
 	drawStat(g, "Number of Prey: " + numLivingPrey, fontHeight, menuHeight - 40);
 
@@ -784,10 +709,10 @@ public class Evol extends JApplet implements Runnable {
 	
     }
 
+    // A helper function for drawing useful statistics in the applet menu.
     public void drawStat(Graphics g, String toPrint, int fontHeight, int y) {
 	g.setColor(Color.WHITE);
 	g.fillRect(enviWidth + sliderXOffset, y - fontHeight, sliderWidth, fontHeight);
-
 	g.setColor(Color.BLACK);
 	g.drawString(toPrint, enviWidth + sliderXOffset, y);
     }
