@@ -84,7 +84,7 @@ public class Evol extends JApplet implements Runnable {
     private Creature mostDevelopedCreature;
 
     // Whether or not applet graphics are toggled on.
-    private boolean graphics = true;
+    private boolean graphics = false;
 
     // A key handler for keyboard interaction with the applet.
     private KeyHandler keyHandler;
@@ -116,7 +116,7 @@ public class Evol extends JApplet implements Runnable {
     private final int PRED_START_COUNT = 1;
 
     // Maximum number of food sources that can occur in the environment.
-    private final int MAX_FOOD_COUNT = 250;
+    private final int MAX_FOOD_COUNT = 750;
 
     // Maximum amount of food that can spawn from any food source.
     private final int MAX_FOOD_SIZE = 10000;
@@ -440,49 +440,16 @@ public class Evol extends JApplet implements Runnable {
                 // Controller removes all dead creatures and consumed food sources.
                 controller.testObjects();
 
-		/*
-                // Generate food according to if there is enough space for it 
-		// (foodCount < MAX_FOOD_COUNT) and according to how quickly it should 
-		// be generated. On each frame, there is a (FOOD_GEN_RATE / 1000) probability 
-		// of a new food source being randomly generated in the game.
-                if (foodCount < MAX_FOOD_COUNT && rand.nextInt(1000) < FOOD_GEN_RATE) {
-                    controller.add(new Food(nextFoodXPos(),
-					    nextFoodYPos(),
-					    nextFoodSize()));
+		newGenCreated = false;
+		if (preyCount == 0) createNewGeneration();
 
-                }
-		*/
-
-
-		/*
-                // Repopulate the game with more predators if they all die out.
-                if (predCount < 1 && rand.nextInt(10) < 4 && predators) {
-
-                    // Create new predator with random x and y coordinates.
-                    Creature newPred = new Creature(rand.nextInt(enviWidth - enviOffset),
-						    rand.nextInt(enviHeight - enviOffset),
-						    0, 1, this);
-
-                    // Experimental code. Assume that number of prey will be very high 
-		    // after 2000 divisions and so help predator evolution by making more of them.
-                    if (Creature.divideCount < 2000) {
-                        controller.add(newPred);
-                    } else {
-                        for (int i = 0; i < 3; i++) {
-                            newPred = new Creature(rand.nextInt(enviWidth - enviOffset),
-						   rand.nextInt(enviHeight - enviOffset),
-						   0, 1, this);
-                            controller.add(newPred);
-                        }
-                    }
-                }
-		*/
-
-		
-		// If all prey has died, create a new generation.
-                if (preyCount == 0) createNewGeneration();
-            
 	    }
+
+	    // If all prey has died, create a new generation.
+
+
+            
+		
 	    
 	    // If a most-developed creature exists, set it's color to green.
 	    if (mostDevelopedCreature != null) {
@@ -497,9 +464,10 @@ public class Evol extends JApplet implements Runnable {
 		    consoleBuffer.append(mostDevelopedCreature.getGenome());
 		}
 	    }
-	
+	    
 	    // We either want to print something to the console or write it to a file.
-	    if (keyHandler.getPrintTimes() || keyHandler.getWriteToFile()) {
+	    if (keyHandler.getPrintTimes() || keyHandler.getWriteToFile()
+		|| (!graphics && genCount % 5 == 0 && newGenCreated)) {
 
 		// Toggle off print times so it doesn't print multiple times.
 		keyHandler.setPrintTimes(false);
@@ -509,7 +477,7 @@ public class Evol extends JApplet implements Runnable {
 		//consoleBuffer.append("Division times for each generation:\n\n");
 		
 		// Add the generation division times to the console buffer.
-		int gdtSize = generationDivisionTimes.size();
+		int gdtSize = generationScores.size();
 		for (int i = 0; i < gdtSize; i++) {
 		    Vector<Integer> generationScore = generationScores.elementAt(i);
 		    if (generationScore.size() > 30) {
@@ -532,7 +500,7 @@ public class Evol extends JApplet implements Runnable {
 			consoleBuffer.append(",  Best Creature: ");
 			consoleBuffer.append(generationScore.elementAt(0));
 			consoleBuffer.append(",  Median Creature: ");
-			consoleBuffer.append(generationScore.elementAt(generationScore.size() / 2));
+			consoleBuffer.append(generationScore.elementAt(generationScore.size() / 3));
 			//consoleBuffer.append("\n\n");
 
 			if (generationScore.size() != PREY_START_COUNT) {
@@ -541,12 +509,24 @@ public class Evol extends JApplet implements Runnable {
 			consoleBuffer.append("\n");
 		    }
 		}
+
+		System.out.println("\n\nBest Creatures");
+		for(int i = 0; i < gdtSize; i++) {
+		    Vector<Integer> generationScore = generationScores.elementAt(i);
+		    System.out.println(generationScore.elementAt(0));
+		}
+
+		System.out.println("\n\nMedian Creatures");
+		for(int i = 0; i < gdtSize; i++) {
+		    Vector<Integer> generationScore = generationScores.elementAt(i);
+		    System.out.println(generationScore.elementAt(generationScore.size() / 3));
+		}
+
 		
 		// Add some extra newlines at the end.
 		consoleBuffer.append("\n\n\n");
 		
 		// Print the buffer context to the applet console.
-		System.out.print(consoleBuffer.toString());
 		
 	    }
 	    
@@ -624,7 +604,7 @@ public class Evol extends JApplet implements Runnable {
 	controller.removePreds();
 
 	// Generate FOOD_START_COUNT random Food sources within reasonable bounds.
-	for (int i = 0; i < FOOD_START_COUNT * Math.sqrt(genCount); i++) {
+	for (int i = 0; i < FOOD_START_COUNT; i++) {
 	    controller.add(new Food(nextFoodXPos(),
 				    nextFoodYPos(),
 				    nextFoodSize()));
@@ -645,97 +625,77 @@ public class Evol extends JApplet implements Runnable {
 	
 	int currentGenDeadIndex = 0;
 	
-	// boolean restart = true;
-	
-	/*
-	  for (Creature creature: currentGenDead) {
-	  if (creature.getAmountEaten() != 0) {
-	  restart = false;
-	  }
-	  }
-	*/
-	
-	/*
-	  if(restart) {
-	  consoleBuffer.append("No creature ate food. \n");
-	  }
-	*/
-	
 	double eliteProportion = 0.5;
 	//	double eliteProportion = 0.5 - (1 / (2 * genCount + 3));
 	
 	// Repopulate creatures
-	for (int i = 0; i < PREY_START_COUNT * eliteProportion; i++) {
 
-	    // Get an ancestor creature in top eliteProportion% we know to b
-	    Creature ancestor = currentGenDead.elementAt(i);
-	    
-	    // Generate eliteProporiton - 1 mutates from original creature
-	    for (int j = 0; j < (1.0 / eliteProportion) - 1; j++) {
-
+	// If all the scores are 0, create a new generation of random creatures
+	if(generationScores.elementAt(genCount - 1).elementAt(0) == 0) {
+	    for(int n = 0; n < PREY_START_COUNT; n++) {
 		Creature newPrey = new Creature(nextCreatureXPos(), 
 						nextCreatureYPos(), 
 						nextCreatureAngle(), 0, this);
 
-		
-		// Set the genes of the new Creature
-		for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-		    newPrey.setGene(geneNum, ancestor.getGene(geneNum));
-		}
-		
-		
-		//int numMutations = rand.nextInt(Creature.MUTATION_RATE);
-	       
-		for (int k = 0; k < Creature.MUTATION_RATE; k++) {
-		    newPrey.mutate();
-		}
-
-		if(rand.nextInt(1000) > 836) {
-		    newPrey.transpose(rand.nextInt(Creature.NUM_GENES), "A");
-		}
-
-		/*
-		boolean changed = false;
-
-		for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-		    if(newPrey.getGene(geneNum) != ancestor.getGene(geneNum)) {
-			changed = true;
-		    }
-		}
-
-		if(!changed) {
-		    System.out.println("Child " + j + " is identical to parent");
-		} else {
-		    System.out.println("New Genome! For Child " + j);
-		    System.out.println("Original genome: " + ancestor.getGenome());
-		    System.out.println("Child genome: " + newPrey.getGenome());
-		}
-		*/
-		
-
 		newPrey.setNumAncestors(genCount);
-		
 		controller.add(newPrey);
 	    }
-	    
-	    
-	    // Make new creature that will have same genome as the ancestor
-	    Creature ancestorCopy = new Creature(nextCreatureXPos(), 
-						 nextCreatureYPos(), 
-						 nextCreatureAngle(), 0, this);
-	    
-	    // Set genes to be the same as the ancestor's and do not mutate
-	    for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
-		ancestorCopy.setGene(geneNum, ancestor.getGene(geneNum));
-	    }	
 
-	    ancestorCopy.setNumAncestors(genCount);
-	    
-	    controller.add(ancestorCopy);	    
-	    
-	    
+	} else {
+
+	    for (int i = 0; i < PREY_START_COUNT * eliteProportion; i++) {
+		
+		// Get an ancestor creature in top eliteProportion% we know to b
+		Creature ancestor = currentGenDead.elementAt(i);
+		
+		// Generate eliteProporiton - 1 mutates from original creature
+		for (int j = 0; j < (1.0 / eliteProportion) - 1; j++) {
+		    
+		    Creature newPrey = new Creature(nextCreatureXPos(), 
+						    nextCreatureYPos(), 
+						    nextCreatureAngle(), 0, this);
+		    
+		    
+		    // Set the genes of the new Creature
+		    for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+			newPrey.setGene(geneNum, ancestor.getGene(geneNum));
+		    }
+		    
+		    
+		    //int numMutations = rand.nextInt(Creature.MUTATION_RATE);
+		    
+		    for (int k = 0; k < Creature.MUTATION_RATE; k++) {
+			newPrey.mutate();
+		    }
+		    
+		    if(rand.nextInt(1000) > 836) {
+			newPrey.transpose(rand.nextInt(Creature.NUM_GENES), "A");
+		    }
+		    
+		    newPrey.setNumAncestors(genCount);
+		    
+		    controller.add(newPrey);
+		}
+		
+		
+		// Make new creature that will have same genome as the ancestor
+		Creature ancestorCopy = new Creature(nextCreatureXPos(), 
+						     nextCreatureYPos(), 
+						     nextCreatureAngle(), 0, this);
+		
+		// Set genes to be the same as the ancestor's and do not mutate
+		for(int geneNum = 0; geneNum < Creature.NUM_GENES; geneNum++) {
+		    ancestorCopy.setGene(geneNum, ancestor.getGene(geneNum));
+		}	
+		
+		ancestorCopy.setNumAncestors(genCount);
+		
+		controller.add(ancestorCopy);	    
+		
+		
+	    }
 	}
-
+	
 	// Reset/clear the current generation's dead creatures.
 	this.currentGenDead = new Vector<Creature>();
 	
@@ -798,30 +758,29 @@ public class Evol extends JApplet implements Runnable {
 	// DRAW SIMULATION STATISTICS
 	//============================
 	
-	g.setColor(Color.WHITE);
-	g.fillRect(enviWidth + sliderXOffset, menuHeight - 40 - fontHeight,
-		   sliderWidth, fontHeight);
+	//	g.setColor(Color.WHITE);
+	//g.fillRect(enviWidth + sliderXOffset, menuHeight - 40 - fontHeight,
+	//	   sliderWidth, fontHeight);
 	
-	g.setColor(Color.BLACK);
-	g.drawString("Max food points hits: " + Creature.divideCount,
-		     enviWidth + sliderXOffset, menuHeight - 40);
+	if(genCount == 0) {
+	    drawStat(g, "Best Score in Previous Gen: N/A", fontHeight, menuHeight - 80);
+	    drawStat(g, "Median Score in Previous Gen: N/A", fontHeight, menuHeight - 60);	    
+	} else {
+
+	    Vector<Integer> prevGenScores = generationScores.elementAt(genCount - 1);
+
+	    drawStat(g, "Best Score in Previous Gen: " 
+		     +  prevGenScores.elementAt(0), 
+		     fontHeight, menuHeight - 80);
+	    
+	    drawStat(g, "Median Score in Previous Gen: " 
+		     +  prevGenScores.elementAt(prevGenScores.size() / 2), 
+		     fontHeight, menuHeight - 60);
+	}
 	
-	g.setColor(Color.WHITE);
-	g.fillRect(enviWidth + sliderXOffset, menuHeight - 60 - fontHeight,
-		   sliderWidth, fontHeight);
-	
-	g.setColor(Color.BLACK);
-	g.drawString("Generation Number: " + mostAncestors,
-		     enviWidth + sliderXOffset, menuHeight - 60);
-	
-	g.setColor(Color.WHITE);
-	g.fillRect(enviWidth + sliderXOffset, menuHeight - 80 - fontHeight,
-		   sliderWidth, fontHeight);
-	
-	g.setColor(Color.BLACK);
-	g.drawString("Number of Prey: " + numLivingPrey,
-		     enviWidth + sliderXOffset, menuHeight - 80);
-	
+	drawStat(g, "Generation Number: " + mostAncestors, fontHeight, menuHeight - 20);
+	drawStat(g, "Number of Prey: " + numLivingPrey, fontHeight, menuHeight - 40);
+
 	//==============
 	// DRAW BORDERS
 	//==============
@@ -829,6 +788,14 @@ public class Evol extends JApplet implements Runnable {
 	g.drawRect(enviWidth, 0, menuWidth, menuHeight);
 	g.drawRect(0, enviHeight, consoleWidth, consoleHeight);
 	
+    }
+
+    public void drawStat(Graphics g, String toPrint, int fontHeight, int y) {
+	g.setColor(Color.WHITE);
+	g.fillRect(enviWidth + sliderXOffset, y - fontHeight, sliderWidth, fontHeight);
+
+	g.setColor(Color.BLACK);
+	g.drawString(toPrint, enviWidth + sliderXOffset, y);
     }
     
     // Stops the applet.
