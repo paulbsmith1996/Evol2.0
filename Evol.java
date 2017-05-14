@@ -461,7 +461,7 @@ public class Evol extends JApplet implements Runnable {
 			consoleBuffer.append("Generation " + i);
 			consoleBuffer.append(",  Best Creature: ");
 			consoleBuffer.append(generationScore.elementAt(0));
-			consoleBuffer.append(",  Median Creature: ");
+			consoleBuffer.append(",  33rd% Creature: ");
 			consoleBuffer.append(generationScore.elementAt(generationScore.size() / 3));
 			if (generationScore.size() != PREY_START_COUNT) {
 			    consoleBuffer.append(" num creatures: " + generationScore.size());
@@ -599,6 +599,12 @@ public class Evol extends JApplet implements Runnable {
 		    for (int k = 0; k < Creature.MUTATION_RATE; k++) {
 			newPrey.mutate();
 		    }
+
+		    /*
+		    if(rand.nextInt(1000) > 875) {
+			newPrey.transpose(rand.nextInt(Creature.NUM_GENES), "A");
+		    }
+		    */
 		    
 		    newPrey.setNumAncestors(genCount);
 		    controller.add(newPrey);
@@ -693,8 +699,8 @@ public class Evol extends JApplet implements Runnable {
 	    drawStat(g, "Best Score in Previous Gen: " 
 		     +  prevGenScores.elementAt(0), 
 		     fontHeight, menuHeight - 80);
-	    drawStat(g, "Median Score in Previous Gen: " 
-		     +  prevGenScores.elementAt(prevGenScores.size() / 2), 
+	    drawStat(g, "33rd% Score in Previous Gen: " 
+		     +  prevGenScores.elementAt(prevGenScores.size() / 3), 
 		     fontHeight, menuHeight - 60);
 	}
 	drawStat(g, "Generation Number: " + mostAncestors, fontHeight, menuHeight - 20);
