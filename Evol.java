@@ -692,19 +692,19 @@ public class Evol extends JApplet implements Runnable {
 	//============================
 	
 	if (genCount == 0) {
-	    drawStat(g, "Best Score in Previous Gen: N/A", fontHeight, menuHeight - 80);
-	    drawStat(g, "Median Score in Previous Gen: N/A", fontHeight, menuHeight - 60);	    
+	    drawStat(g, "Best Score in Previous Gen: N/A", fontHeight, menuHeight - 100);
+	    drawStat(g, "Median Score in Previous Gen: N/A", fontHeight, menuHeight - 80);	    
 	} else {
 	    Vector<Integer> prevGenScores = generationScores.elementAt(genCount - 1);
 	    drawStat(g, "Best Score in Previous Gen: " 
 		     +  prevGenScores.elementAt(0), 
-		     fontHeight, menuHeight - 80);
+		     fontHeight, menuHeight - 100);
 	    drawStat(g, "33rd% Score in Previous Gen: " 
 		     +  prevGenScores.elementAt(prevGenScores.size() / 3), 
-		     fontHeight, menuHeight - 60);
+		     fontHeight, menuHeight - 80);
 	}
-	drawStat(g, "Generation Number: " + mostAncestors, fontHeight, menuHeight - 20);
-	drawStat(g, "Number of Prey: " + numLivingPrey, fontHeight, menuHeight - 40);
+	drawStat(g, "Generation Number: " + mostAncestors, fontHeight, menuHeight - 40);
+	drawStat(g, "Number of Prey: " + numLivingPrey, fontHeight, menuHeight - 60);
 
 	//==============
 	// DRAW BORDERS
